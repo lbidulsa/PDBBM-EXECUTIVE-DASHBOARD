@@ -231,7 +231,7 @@ with hdr_col1:
     st.markdown('<div class="glow-header-sub">Integrated Multi-Program Decision Support & Live Executive Analytics</div>', unsafe_allow_html=True)
 with hdr_col2:
     if main_header_logo:
-        st.image(main_header_logo, width=150)
+        st.image(main_header_logo, width=250)
 
 st.sidebar.title("📌 Navigation Portal")
 
