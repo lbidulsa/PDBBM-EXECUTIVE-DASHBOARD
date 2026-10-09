@@ -17,7 +17,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom Styling (FIXED LOGO PROPORTIONS & FIT)
+# Custom Styling
 st.markdown("""
     <style>
     .stApp {
@@ -110,7 +110,7 @@ st.markdown("""
         margin-bottom: 15px;
     }
     
-    /* Reset image deformations completely */
+    /* Reset image deformations */
     section[data-testid="stSidebar"] img {
         border-radius: 0px !important;
         mix-blend-mode: normal !important;
@@ -159,18 +159,24 @@ if hasattr(st, "dialog"):
         privacy_modal()
 
 # ---------------------------------------------------------
-# LOGO LOADER
+# LOGO LOADERS (EXPLICIT FOR MAIN HEADER AND SIDEBAR)
 # ---------------------------------------------------------
-def get_main_logo_path():
+def get_main_header_logo():
+    if os.path.exists("Peace and Dev LOGO.jpg"):
+        return "Peace and Dev LOGO.jpg"
+    elif os.path.exists("logo.png"):
+        return "logo.png"
+    return None
+
+def get_sidebar_logo():
     if os.path.exists("logo.png"):
         return "logo.png"
     elif os.path.exists("Peace and Dev LOGO.jpg"):
         return "Peace and Dev LOGO.jpg"
-    elif os.path.exists("pamana logo.jpg"):
-        return "pamana logo.jpg"
     return None
 
-main_logo = get_main_logo_path()
+main_header_logo = get_main_header_logo()
+sidebar_logo = get_sidebar_logo()
 plotly_template = "plotly_white"
 
 def export_to_excel_bytes(df):
@@ -219,20 +225,20 @@ df_lgu_summary = load_lgu_led_data()
 # ---------------------------------------------------------
 # HEADER & SIDEBAR NAVIGATION
 # ---------------------------------------------------------
-hdr_col1, hdr_col2 = st.columns([4, 1.2])
+hdr_col1, hdr_col2 = st.columns([4, 1])
 with hdr_col1:
     st.markdown('<div class="glow-header-title">🕊️ PDBBM EXECUTIVE COMPREHENSIVE DASHBOARD</div>', unsafe_allow_html=True)
     st.markdown('<div class="glow-header-sub">Integrated Multi-Program Decision Support & Live Executive Analytics</div>', unsafe_allow_html=True)
 with hdr_col2:
-    if main_logo:
-        st.image(main_logo, use_container_width=True)
+    if main_header_logo:
+        st.image(main_header_logo, width=150)
 
 st.sidebar.title("📌 Navigation Portal")
 
-# SIDEBAR LOGO WITH PERFECT PROPORTIONS
-if main_logo:
+# SIDEBAR LOGO DISPLAY
+if sidebar_logo:
     st.sidebar.markdown('<div class="sidebar-logo-container">', unsafe_allow_html=True)
-    st.sidebar.image(main_logo, use_container_width=True)
+    st.sidebar.image(sidebar_logo, use_container_width=True)
     st.sidebar.markdown('</div>', unsafe_allow_html=True)
 
 program_view = st.sidebar.radio(
