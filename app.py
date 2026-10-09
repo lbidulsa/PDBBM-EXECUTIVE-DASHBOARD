@@ -17,7 +17,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom Styling
+# Custom Styling (With Logo White Box Fix & Dynamic Dark Sidebar Blend)
 st.markdown("""
     <style>
     .stApp {
@@ -97,6 +97,18 @@ st.markdown("""
     section[data-testid="stSidebar"] * {
         color: #F8FAFC !important;
     }
+    
+    /* LOGO BACKGROUND BLEND CSS FIX */
+    .sidebar-logo-card {
+        background: #FFFFFF;
+        border-radius: 18px;
+        padding: 12px;
+        text-align: center;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+        border: 2px solid #1E293B;
+        margin-bottom: 15px;
+    }
+    
     .privacy-banner {
         background: rgba(225, 29, 72, 0.08);
         border: 1px solid rgba(225, 29, 72, 0.3);
@@ -109,6 +121,32 @@ st.markdown("""
     }
     </style>
 """, unsafe_allow_html=True)
+
+# ---------------------------------------------------------
+# DATA PRIVACY ACT (RA 10173) AUTOMATIC POP-UP MODAL
+# ---------------------------------------------------------
+if "privacy_accepted" not in st.session_state:
+    st.session_state["privacy_accepted"] = False
+
+if hasattr(st, "dialog"):
+    @st.dialog("🔒 DATA PRIVACY ACT COMPLIANCE REMINDER (RA 10173)")
+    def privacy_modal():
+        st.markdown("""
+        **DSWD FIELD OFFICE X • PDBBM EXECUTIVE MULTI-PROGRAM PORTAL**
+        
+        Pursuant to **Republic Act No. 10173 (Data Privacy Act of 2012)**:
+        
+        1. **Official Use Only:** Data presented in this portal consists of consolidated executive analytics, program targets, and operational metrics.
+        2. **Confidentiality Notice:** Unlawful reproduction, redistribution, or unauthorized sharing of these metrics is strictly prohibited.
+        3. **Security Standards:** All system interactions and access sessions are logged for audit compliance.
+        """)
+        st.divider()
+        if st.button("✅ I Agree & Proceed to Executive Portal", use_container_width=True):
+            st.session_state["privacy_accepted"] = True
+            st.rerun()
+
+    if not st.session_state["privacy_accepted"]:
+        privacy_modal()
 
 # ---------------------------------------------------------
 # LOGO LOADER
@@ -136,7 +174,6 @@ def export_to_excel_bytes(df):
 
 # ---------------------------------------------------------
 # REAL DATA ENGINES - REGION 10 SCOPE ONLY
-# PROVINCES: Bukidnon, Lanao del Norte, Lanao del Sur, Misamis Occidental, Misamis Oriental
 # ---------------------------------------------------------
 DB_FILE = "pamana_database.db"
 
@@ -181,8 +218,12 @@ with hdr_col2:
         st.image(main_logo, width=180)
 
 st.sidebar.title("📌 Navigation Portal")
+
+# BEAUTIFIED LOGO DISPLAY IN SIDEBAR
 if main_logo:
+    st.sidebar.markdown('<div class="sidebar-logo-card">', unsafe_allow_html=True)
     st.sidebar.image(main_logo, use_container_width=True)
+    st.sidebar.markdown('</div>', unsafe_allow_html=True)
 
 program_view = st.sidebar.radio(
     "Select Portal View:",
@@ -224,7 +265,6 @@ st.sidebar.markdown(
 # ---------------------------------------------------------
 if program_view == "🌐 Consolidated Executive Overview":
     
-    # Filter SCM Data
     if selected_provinces:
         f_scms = df_scms_summary[df_scms_summary['Province'].isin(selected_provinces)]
     else:
