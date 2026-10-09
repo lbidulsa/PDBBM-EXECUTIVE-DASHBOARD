@@ -5,6 +5,7 @@ import sqlite3
 import plotly.express as px
 import plotly.graph_objects as go
 import os
+from io import BytesIO
 
 # ---------------------------------------------------------
 # PAGE CONFIGURATION & EXECUTIVE LIGHT UI
@@ -124,6 +125,15 @@ def get_main_logo_path():
 main_logo = get_main_logo_path()
 plotly_template = "plotly_white"
 
+def export_to_excel_bytes(df):
+    output = BytesIO()
+    try:
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name='Executive_Data')
+    except Exception:
+        output.write(df.to_csv(index=False).encode('utf-8'))
+    return output.getvalue()
+
 # ---------------------------------------------------------
 # REAL DATA ENGINES - REGION 10 SCOPE ONLY
 # PROVINCES: Bukidnon, Lanao del Norte, Lanao del Sur, Misamis Occidental, Misamis Oriental
@@ -137,7 +147,6 @@ def get_db_connection():
 
 @st.cache_data(ttl=300)
 def load_scms_summary_data():
-    # Region X Real Provincial Breakdown from SCM Tracking Sheet
     return pd.DataFrame({
         'Province': ['Lanao del Sur', 'Lanao del Norte', 'Misamis Oriental', 'Bukidnon', 'Misamis Occidental'],
         'Annual_Target': [6070, 1990, 450, 377, 150],
@@ -148,7 +157,6 @@ def load_scms_summary_data():
 
 @st.cache_data(ttl=300)
 def load_lgu_led_data():
-    # Region X LGU-Led Real Targets Data Engine
     return pd.DataFrame({
         'Province': ['Bukidnon', 'Lanao del Norte', 'Misamis Oriental', 'Misamis Occidental'],
         'Target_SubProjects': [49, 35, 28, 22],
@@ -198,6 +206,19 @@ selected_provinces = st.sidebar.multiselect(
 st.sidebar.markdown("---")
 st.sidebar.info("🔒 **Data Privacy Active:** Beneficiary personal identity details for SCMS & LGU-Led are protected.")
 
+# DEVELOPER OWNERSHIP BADGE IN SIDEBAR
+st.sidebar.markdown("---")
+st.sidebar.markdown(
+    """
+    <div style="text-align: center; font-size: 0.8em; color: #94A3B8;">
+        💻 <b>System Developer & Architect</b><br>
+        Developed with ❤️ by <br><b style="color:#38BDF8;">LOUIE B. IDULSA - PDBBM ITO I</b><br>
+        <i>DSWD FO X - PDBBM Multi-Program Portal © 2026</i>
+    </div>
+    """, 
+    unsafe_allow_html=True
+)
+
 # ---------------------------------------------------------
 # CONSOLIDATED EXECUTIVE OVERVIEW
 # ---------------------------------------------------------
@@ -218,7 +239,8 @@ if program_view == "🌐 Consolidated Executive Overview":
 
     s1, s2, s3, s4 = st.columns(4)
     s1.metric("Annual Target Clients", f"{tot_target:,}")
-    s2.metric("Total Profiled Clients", f"{tot_profiled:,}", delta=f"{(tot_profiled/tot_target)*100:.1f}% Accomplished")
+    accomplishment_pct = (tot_profiled / tot_target * 100) if tot_target > 0 else 0
+    s2.metric("Total Profiled Clients", f"{tot_profiled:,}", delta=f"{accomplishment_pct:.1f}% Accomplished")
     s3.metric("Cases Managed in System", f"{tot_managed:,}")
     s4.metric("Interventions Delivered", f"{tot_interventions:,}")
 
@@ -241,14 +263,29 @@ if program_view == "🌐 Consolidated Executive Overview":
         st.plotly_chart(fig_target_vs_act, use_container_width=True)
 
     with sg3:
-        st.subheader("📉 Case Management Pipeline")
-        funnel_df = pd.DataFrame({
-            'Stage': ['Annual Target', 'Conducted Profiling', 'Case Managed', 'Interventions Delivered'],
-            'Count': [tot_target, tot_profiled, tot_managed, tot_interventions]
-        })
-        fig_funnel = px.funnel(funnel_df, x='Count', y='Stage', template=plotly_template, color_discrete_sequence=['#E11D48'])
-        fig_funnel.update_layout(margin=dict(t=20, b=20, l=20, r=20))
-        st.plotly_chart(fig_funnel, use_container_width=True)
+        st.subheader("🎯 Overall Accomplishment Rate")
+        fig_gauge = go.Figure(go.Indicator(
+            mode="gauge+number",
+            value=accomplishment_pct,
+            domain={'x': [0, 1], 'y': [0, 1]},
+            number={'suffix': "%", 'font': {'size': 28, 'color': "#0284C7"}},
+            gauge={
+                'axis': {'range': [None, 100]},
+                'bar': {'color': "#0284C7"},
+                'steps': [
+                    {'range': [0, 50], 'color': "#FFE4E6"},
+                    {'range': [50, 85], 'color': "#FEF3C7"},
+                    {'range': [85, 100], 'color': "#DCFCE7"}
+                ],
+                'threshold': {
+                    'line': {'color': "red", 'width': 4},
+                    'thickness': 0.75,
+                    'value': 100
+                }
+            }
+        ))
+        fig_gauge.update_layout(margin=dict(t=30, b=20, l=20, r=20), height=280)
+        st.plotly_chart(fig_gauge, use_container_width=True)
 
     st.markdown("---")
 
@@ -301,6 +338,19 @@ if program_view == "🌐 Consolidated Executive Overview":
     st.markdown('<div class="sec-card-cdpd"><span class="sec-title-cdpd">🕊️ 3. PAMANA CDPD (Community-Driven Peace & Development)</span></div>', unsafe_allow_html=True)
     st.info("ℹ️ **PAMANA CDPD Status Notice:** Official Region X CDPD sub-project database entries are currently under validation and data synchronization.")
 
+    st.markdown("---")
+    st.subheader("📥 Export Consolidated Executive Analytics")
+    col_exp1, col_exp2 = st.columns([1, 2])
+    with col_exp1:
+        scms_bytes = export_to_excel_bytes(f_scms)
+        st.download_button(
+            label="📥 Download SCMS Summary Report (.xlsx)",
+            data=scms_bytes,
+            file_name="PDBBM_SCMS_Executive_Summary.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            use_container_width=True
+        )
+
 # ---------------------------------------------------------
 # INDIVIDUAL MODULE VIEWS
 # ---------------------------------------------------------
@@ -319,3 +369,15 @@ elif program_view == "🏛️ 2. PAMANA LGU-Led Analytics":
 else:
     st.markdown('<div class="glow-header-title">🕊️ PAMANA CDPD Database Portal</div>', unsafe_allow_html=True)
     st.warning("⚠️ CDPD database records for Region X are currently empty / pending official system upload.")
+
+# DEVELOPER FOOTER BADGE
+st.markdown("---")
+st.markdown(
+    """
+    <div style="text-align: center; font-size: 0.85em; color: #64748B; padding-bottom: 20px;">
+        ⚙️ <b>PDBBM Executive Multi-Program Decision Support Portal</b> | Powered by Streamlit & Python<br>
+        Designed & Developed by <b>LOUIE B. IDULSA - PDBBM ITO I</b> • DSWD Field Office X
+    </div>
+    """, 
+    unsafe_allow_html=True
+)
