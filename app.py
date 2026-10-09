@@ -32,12 +32,14 @@ st.markdown("""
         -webkit-text-fill-color: transparent;
         letter-spacing: -0.8px;
         margin-bottom: 2px;
+        text-align: center !important;  /* <-- KINI ANG I-DUGANG PARA MA-CENTER! */
     }
     .glow-header-sub {
         color: #64748B;
         font-size: 22px;
         font-weight: 600;
         margin-bottom: 20px;
+        text-align: center !important;  /* <-- KINI ANG I-DUGANG PARA MA-CENTER ANG SUBTITLE! */
     }
     div[data-testid="stMetric"] {
         background: #FFFFFF !important;
