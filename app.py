@@ -25,7 +25,7 @@ st.markdown("""
         color: #0F172A;
     }
     .glow-header-title {
-        font-size: 32px !important;
+        font-size: 48px !important;
         font-weight: 900 !important;
         background: linear-gradient(90deg, #E11D48, #16A34A, #0284C7);
         -webkit-background-clip: text;
@@ -35,7 +35,7 @@ st.markdown("""
     }
     .glow-header-sub {
         color: #64748B;
-        font-size: 14px;
+        font-size: 22px;
         font-weight: 600;
         margin-bottom: 20px;
     }
