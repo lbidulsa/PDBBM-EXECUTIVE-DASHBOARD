@@ -17,7 +17,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom Styling (With Logo White Box Fix & Dynamic Dark Sidebar Blend)
+# Custom Styling with Advanced Image Blend Fix for Dark Sidebar
 st.markdown("""
     <style>
     .stApp {
@@ -90,6 +90,8 @@ st.markdown("""
     .sec-title-scms { color: #E11D48; font-size: 20px; font-weight: 800; }
     .sec-title-lgu { color: #16A34A; font-size: 20px; font-weight: 800; }
     .sec-title-cdpd { color: #0284C7; font-size: 20px; font-weight: 800; }
+    
+    /* SIDEBAR & LOGO BLEND OVERRIDE */
     section[data-testid="stSidebar"] {
         background-color: #0F172A !important;
         color: #FFFFFF !important;
@@ -98,15 +100,13 @@ st.markdown("""
         color: #F8FAFC !important;
     }
     
-    /* LOGO BACKGROUND BLEND CSS FIX */
-    .sidebar-logo-card {
-        background: #FFFFFF;
-        border-radius: 18px;
-        padding: 12px;
-        text-align: center;
-        box-shadow: 0 8px 20px rgba(0,0,0,0.25);
-        border: 2px solid #1E293B;
-        margin-bottom: 15px;
+    /* CSS MAGIC TO REMOVE WHITE BOX IN JPG LOGO */
+    section[data-testid="stSidebar"] img {
+        background-color: transparent !important;
+        border-radius: 50% !important;
+        mix-blend-mode: screen !important;
+        filter: brightness(1.1) contrast(1.1);
+        padding: 4px;
     }
     
     .privacy-banner {
@@ -152,12 +152,12 @@ if hasattr(st, "dialog"):
 # LOGO LOADER
 # ---------------------------------------------------------
 def get_main_logo_path():
-    if os.path.exists("Peace and Dev LOGO.jpg"):
+    if os.path.exists("logo.png"):
+        return "logo.png"
+    elif os.path.exists("Peace and Dev LOGO.jpg"):
         return "Peace and Dev LOGO.jpg"
     elif os.path.exists("pamana logo.jpg"):
         return "pamana logo.jpg"
-    elif os.path.exists("logo.png"):
-        return "logo.png"
     return None
 
 main_logo = get_main_logo_path()
@@ -219,11 +219,9 @@ with hdr_col2:
 
 st.sidebar.title("📌 Navigation Portal")
 
-# BEAUTIFIED LOGO DISPLAY IN SIDEBAR
+# LOGO DISPLAY WITH MIX-BLEND
 if main_logo:
-    st.sidebar.markdown('<div class="sidebar-logo-card">', unsafe_allow_html=True)
     st.sidebar.image(main_logo, use_container_width=True)
-    st.sidebar.markdown('</div>', unsafe_allow_html=True)
 
 program_view = st.sidebar.radio(
     "Select Portal View:",
