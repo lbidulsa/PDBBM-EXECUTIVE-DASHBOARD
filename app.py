@@ -17,7 +17,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom Styling with Advanced Image Blend Fix for Dark Sidebar
+# Custom Styling (FIXED LOGO PROPORTIONS & FIT)
 st.markdown("""
     <style>
     .stApp {
@@ -91,7 +91,7 @@ st.markdown("""
     .sec-title-lgu { color: #16A34A; font-size: 20px; font-weight: 800; }
     .sec-title-cdpd { color: #0284C7; font-size: 20px; font-weight: 800; }
     
-    /* SIDEBAR & LOGO BLEND OVERRIDE */
+    /* SIDEBAR STYLING */
     section[data-testid="stSidebar"] {
         background-color: #0F172A !important;
         color: #FFFFFF !important;
@@ -100,13 +100,23 @@ st.markdown("""
         color: #F8FAFC !important;
     }
     
-    /* CSS MAGIC TO REMOVE WHITE BOX IN JPG LOGO */
+    /* PROPER SIDEBAR LOGO CONTAINER & NATURAL PROPORTION FIX */
+    .sidebar-logo-container {
+        background-color: #FFFFFF;
+        border-radius: 12px;
+        padding: 8px 12px;
+        text-align: center;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        margin-bottom: 15px;
+    }
+    
+    /* Reset image deformations completely */
     section[data-testid="stSidebar"] img {
-        background-color: transparent !important;
-        border-radius: 50% !important;
-        mix-blend-mode: screen !important;
-        filter: brightness(1.1) contrast(1.1);
-        padding: 4px;
+        border-radius: 0px !important;
+        mix-blend-mode: normal !important;
+        object-fit: contain !important;
+        max-width: 100% !important;
+        height: auto !important;
     }
     
     .privacy-banner {
@@ -209,19 +219,21 @@ df_lgu_summary = load_lgu_led_data()
 # ---------------------------------------------------------
 # HEADER & SIDEBAR NAVIGATION
 # ---------------------------------------------------------
-hdr_col1, hdr_col2 = st.columns([4, 1])
+hdr_col1, hdr_col2 = st.columns([4, 1.2])
 with hdr_col1:
     st.markdown('<div class="glow-header-title">🕊️ PDBBM EXECUTIVE COMPREHENSIVE DASHBOARD</div>', unsafe_allow_html=True)
     st.markdown('<div class="glow-header-sub">Integrated Multi-Program Decision Support & Live Executive Analytics</div>', unsafe_allow_html=True)
 with hdr_col2:
     if main_logo:
-        st.image(main_logo, width=180)
+        st.image(main_logo, use_container_width=True)
 
 st.sidebar.title("📌 Navigation Portal")
 
-# LOGO DISPLAY WITH MIX-BLEND
+# SIDEBAR LOGO WITH PERFECT PROPORTIONS
 if main_logo:
+    st.sidebar.markdown('<div class="sidebar-logo-container">', unsafe_allow_html=True)
     st.sidebar.image(main_logo, use_container_width=True)
+    st.sidebar.markdown('</div>', unsafe_allow_html=True)
 
 program_view = st.sidebar.radio(
     "Select Portal View:",
