@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import sqlite3
+from sqlalchemy import create_engine
 import plotly.express as px
 import plotly.graph_objects as go
 import os
@@ -32,14 +32,14 @@ st.markdown("""
         -webkit-text-fill-color: transparent;
         letter-spacing: -0.8px;
         margin-bottom: 2px;
-        text-align: center !important;  /* <-- KINI ANG I-DUGANG PARA MA-CENTER! */
+        text-align: center !important;
     }
     .glow-header-sub {
         color: #64748B;
         font-size: 22px;
         font-weight: 600;
         margin-bottom: 20px;
-        text-align: center !important;  /* <-- KINI ANG I-DUGANG PARA MA-CENTER ANG SUBTITLE! */
+        text-align: center !important;
     }
     div[data-testid="stMetric"] {
         background: #FFFFFF !important;
@@ -93,7 +93,6 @@ st.markdown("""
     .sec-title-lgu { color: #16A34A; font-size: 20px; font-weight: 800; }
     .sec-title-cdpd { color: #0284C7; font-size: 20px; font-weight: 800; }
     
-    /* SIDEBAR STYLING */
     section[data-testid="stSidebar"] {
         background-color: #0F172A !important;
         color: #FFFFFF !important;
@@ -102,7 +101,6 @@ st.markdown("""
         color: #F8FAFC !important;
     }
     
-    /* PROPER SIDEBAR LOGO CONTAINER & NATURAL PROPORTION FIX */
     .sidebar-logo-container {
         background-color: #FFFFFF;
         border-radius: 12px;
@@ -112,7 +110,6 @@ st.markdown("""
         margin-bottom: 15px;
     }
     
-    /* Reset image deformations */
     section[data-testid="stSidebar"] img {
         border-radius: 0px !important;
         mix-blend-mode: normal !important;
@@ -161,7 +158,7 @@ if hasattr(st, "dialog"):
         privacy_modal()
 
 # ---------------------------------------------------------
-# LOGO LOADERS (EXPLICIT FOR MAIN HEADER AND SIDEBAR)
+# LOGO LOADERS
 # ---------------------------------------------------------
 def get_main_header_logo():
     if os.path.exists("Peace and Dev LOGO.jpg"):
@@ -191,14 +188,19 @@ def export_to_excel_bytes(df):
     return output.getvalue()
 
 # ---------------------------------------------------------
-# REAL DATA ENGINES - REGION 10 SCOPE ONLY
+# CENTRALIZED SUPABASE CLOUD DATABASE CONNECTION ENGINE
 # ---------------------------------------------------------
-DB_FILE = "pamana_database.db"
+DEFAULT_DB_URL = "postgresql+psycopg2://postgres.oxyvjstdncnnefbkilaa:5GLJZg5tWE28Wud9@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres"
 
-def get_db_connection():
-    conn = sqlite3.connect(DB_FILE, check_same_thread=False)
-    conn.row_factory = sqlite3.Row
-    return conn
+@st.cache_resource
+def get_db_engine():
+    try:
+        db_url = st.secrets.get("SUPABASE_URL", DEFAULT_DB_URL)
+    except Exception:
+        db_url = DEFAULT_DB_URL
+    return create_engine(db_url, pool_pre_ping=True)
+
+engine = get_db_engine()
 
 @st.cache_data(ttl=300)
 def load_scms_summary_data():
@@ -237,7 +239,6 @@ with hdr_col2:
 
 st.sidebar.title("📌 Navigation Portal")
 
-# SIDEBAR LOGO DISPLAY
 if sidebar_logo:
     st.sidebar.markdown('<div class="sidebar-logo-container">', unsafe_allow_html=True)
     st.sidebar.image(sidebar_logo, use_container_width=True)
@@ -265,7 +266,6 @@ selected_provinces = st.sidebar.multiselect(
 st.sidebar.markdown("---")
 st.sidebar.info("🔒 **Data Privacy Active:** Beneficiary personal identity details for SCMS & LGU-Led are protected.")
 
-# DEVELOPER OWNERSHIP BADGE IN SIDEBAR
 st.sidebar.markdown("---")
 st.sidebar.markdown(
     """
