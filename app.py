@@ -280,7 +280,7 @@ df_scms_target_pm = pd.DataFrame({
 })
 
 # ---------------------------------------------------------
-# DATA STRUCTURE (PAMANA LGU-LED AGGREGATED POs SUMMARY)
+# DATA STRUCTURE (PAMANA LGU-LED AGGREGATED 12 POs SUMMARY)
 # ---------------------------------------------------------
 df_lgu_po_summary = pd.DataFrame({
     'Name of PO': [
@@ -288,14 +288,32 @@ df_lgu_po_summary = pd.DataFrame({
         'BUKIDNON PEACE BUILDERS FARMERS ASSOCIATION',
         'LANAO DEL NORTE UNITED MULTI-PURPOSE ASSOCIATION',
         'MISAMIS ORIENTAL INTEGRATED PEACEKEEPERS ASSOC.',
-        'MISAMIS OCCIDENTAL AGRI-PEACE FARMERS COOP'
+        'MISAMIS OCCIDENTAL AGRI-PEACE FARMERS COOP',
+        'KADINGILAN PEACE & DEVELOPMENT FARMERS ASSOC.',
+        'BALINGASAG LIVELIHOOD & PEACE PROMOTION ASSOC.',
+        'MUNAI UNIFIED PEACEKEEPERS ASSOCIATION',
+        'TANGUB CITY INTEGRATED COMMUNITY ASSOC.',
+        'MARAMAG SUSTAINABLE PEACE FARMERS COOP',
+        'TAGOLOAN PEACE BUILDERS MULTI-PURPOSE ASSOC.',
+        'BALO-I PROGRESSIVE COMMUNITY ASSOC.'
     ],
-    'Province': ['Misamis Occidental', 'Bukidnon', 'Lanao del Norte', 'Misamis Oriental', 'Misamis Occidental'],
-    'Municipality': ['Ozamiz City', 'Valencia City', 'Kauswagan', 'Claveria', 'Oroquieta City'],
-    'Total Profiled Members': [17, 45, 38, 29, 22],
-    'Male Members': [5, 38, 30, 24, 18],
-    'Female Members': [12, 7, 8, 5, 4],
-    'Status of Livelihood Support': ['Provided', 'Provided', 'Provided', 'Provided', 'Provided']
+    'Province': [
+        'Misamis Occidental', 'Bukidnon', 'Lanao del Norte', 'Misamis Oriental', 
+        'Misamis Occidental', 'Bukidnon', 'Misamis Oriental', 'Lanao del Norte', 
+        'Misamis Occidental', 'Bukidnon', 'Misamis Oriental', 'Lanao del Norte'
+    ],
+    'Municipality': [
+        'Ozamiz City', 'Valencia City', 'Kauswagan', 'Claveria', 
+        'Oroquieta City', 'Kadingilan', 'Balingasag', 'Munai', 
+        'Tangub City', 'Maramag', 'Tagoloan', 'Balo-i'
+    ],
+    'Total Profiled Members': [17, 45, 38, 29, 22, 31, 26, 50, 19, 41, 33, 27],
+    'Male Members': [5, 38, 30, 24, 18, 25, 20, 42, 14, 33, 27, 21],
+    'Female Members': [12, 7, 8, 5, 4, 6, 6, 8, 5, 8, 6, 6],
+    'Status of Livelihood Support': [
+        'Provided', 'Provided', 'Provided', 'Provided', 'Provided', 'Provided', 
+        'Provided', 'Provided', 'Provided', 'Provided', 'Provided', 'Provided'
+    ]
 })
 
 df_lgu_summary = pd.DataFrame({
