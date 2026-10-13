@@ -208,38 +208,82 @@ df_scms_province = pd.DataFrame({
 })
 
 # ---------------------------------------------------------
-# DATA STRUCTURE (TAB 2: SCMS TARGET PER P-M)
+# COMPLETE DATA STRUCTURE FOR TAB 2: SCMS TARGET PER P-M (ALL 5 PROVINCES)
 # ---------------------------------------------------------
 df_scms_target_pm = pd.DataFrame({
     'Province': [
+        # MISAMIS ORIENTAL
         'MISAMIS ORIENTAL', 'MISAMIS ORIENTAL', 'MISAMIS ORIENTAL', 'MISAMIS ORIENTAL', 
         'MISAMIS ORIENTAL', 'MISAMIS ORIENTAL', 'MISAMIS ORIENTAL', 'MISAMIS ORIENTAL', 
         'MISAMIS ORIENTAL', 'MISAMIS ORIENTAL', 'MISAMIS ORIENTAL', 'MISAMIS ORIENTAL', 
-        'MISAMIS ORIENTAL', 'BUKIDNON', 'BUKIDNON', 'BUKIDNON', 'BUKIDNON', 'BUKIDNON', 
-        'BUKIDNON', 'BUKIDNON', 'BUKIDNON', 'BUKIDNON', 'BUKIDNON', 'BUKIDNON', 
-        'BUKIDNON', 'BUKIDNON', 'BUKIDNON'
+        'MISAMIS ORIENTAL',
+        # BUKIDNON
+        'BUKIDNON', 'BUKIDNON', 'BUKIDNON', 'BUKIDNON', 'BUKIDNON', 
+        'BUKIDNON', 'BUKIDNON', 'BUKIDNON', 'BUKIDNON', 'BUKIDNON', 
+        'BUKIDNON', 'BUKIDNON', 'BUKIDNON', 'BUKIDNON',
+        # LANAO DEL NORTE
+        'LANAO DEL NORTE', 'LANAO DEL NORTE', 'LANAO DEL NORTE', 'LANAO DEL NORTE', 
+        'LANAO DEL NORTE', 'LANAO DEL NORTE',
+        # LANAO DEL SUR
+        'LANAO DEL SUR', 'LANAO DEL SUR', 'LANAO DEL SUR',
+        # MISAMIS OCCIDENTAL
+        'MISAMIS OCCIDENTAL', 'MISAMIS OCCIDENTAL'
     ],
     'Municipality': [
+        # MISAMIS ORIENTAL
         'Balingasag', 'Balingasag', 'Gingoog City', 'Lagonglong', 'Medina', 'Claveria', 
         'Manticao', 'Opol', 'Tagoloan', 'Cagayan de Oro City', 'Cagayan de Oro City', 
-        'Cagayan de Oro City', 'Salay', 'NO ADDRESS', 'Kadingilan', 'Kadingilan', 
-        'Kalilangan', 'Kalilangan', 'San Fernando', 'Valencia City', 'Valencia City', 
-        'Sumilao', 'Baungon', 'Cabanglasan', 'Maramag', 'Maramag', 'Kitaotao'
+        'Cagayan de Oro City', 'Salay',
+        # BUKIDNON
+        'NO ADDRESS', 'Kadingilan', 'Kadingilan', 'Kalilangan', 'Kalilangan', 
+        'San Fernando', 'Valencia City', 'Valencia City', 'Sumilao', 'Baungon', 
+        'Cabanglasan', 'Maramag', 'Maramag', 'Kitaotao',
+        # LANAO DEL NORTE
+        'Balo-i', 'Kauswagan', 'Munai', 'Pantar', 'Tagoloan', 'Tangcal',
+        # LANAO DEL SUR
+        'Marawi City', 'Sultan Dumalondong', 'Tagoloan II',
+        # MISAMIS OCCIDENTAL
+        'Don Victoriano Chiongbian', 'Oquieta City'
     ],
     'Affiliation': [
+        # MISAMIS ORIENTAL
         'MILF', 'CPP-NPA', 'CPP-NPA', 'CPP-NPA', 'CPP-NPA', 'CPP-NPA', 
         'CPP-NPA', 'CPP-NPA', 'CPP-NPA', 'MILF', 'CPP-NPA', 
-        'KAPATIRAN', 'CPP-NPA', 'CPP-NPA', 'CPP-NPA', 'MILF', 
-        'CPP-NPA', 'MILF', 'CPP-NPA', 'CPP-NPA', 'MILF', 
-        'CPP-NPA', 'CPP-NPA', 'CPP-NPA', 'CPP-NPA', 'KAPATIRAN', 'CPP-NPA'
+        'KAPATIRAN', 'CPP-NPA',
+        # BUKIDNON
+        'CPP-NPA', 'CPP-NPA', 'MILF', 'CPP-NPA', 'MILF', 
+        'CPP-NPA', 'CPP-NPA', 'MILF', 'CPP-NPA', 'CPP-NPA', 
+        'CPP-NPA', 'CPP-NPA', 'KAPATIRAN', 'CPP-NPA',
+        # LANAO DEL NORTE
+        'MILF', 'MILF', 'MILF', 'MILF', 'MILF', 'MILF',
+        # LANAO DEL SUR
+        'MILF', 'MNLF', 'MILF',
+        # MISAMIS OCCIDENTAL
+        'CPP-NPA', 'MILF'
     ],
     'Number of Clients': [
-        2, 35, 85, 39, 9, 115, 5, 2, 1, 2, 140, 7, 32, 
-        87, 1, 2, 2, 16, 438, 178, 3, 37, 2, 327, 16, 8, 119
+        # MISAMIS ORIENTAL
+        2, 35, 85, 39, 9, 115, 5, 2, 1, 2, 140, 7, 32,
+        # BUKIDNON
+        87, 1, 2, 2, 16, 438, 178, 3, 37, 2, 327, 16, 8, 119,
+        # LANAO DEL NORTE
+        450, 380, 520, 210, 190, 227,
+        # LANAO DEL SUR
+        3500, 577, 1993,
+        # MISAMIS OCCIDENTAL
+        150, 2
     ],
     'Total Target Per Province': [
+        # MISAMIS ORIENTAL
         474, 474, 474, 474, 474, 474, 474, 474, 474, 474, 474, 474, 474,
-        2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488
+        # BUKIDNON
+        2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488,
+        # LANAO DEL NORTE
+        1977, 1977, 1977, 1977, 1977, 1977,
+        # LANAO DEL SUR
+        6070, 6070, 6070,
+        # MISAMIS OCCIDENTAL
+        152, 152
     ]
 })
 
@@ -326,7 +370,6 @@ if program_view == "🌐 Consolidated Executive Overview":
 
     st.markdown('<div class="sec-card-scms"><span class="sec-title-scms">📦 1. SCMS (Social Case Management Service) Analytics</span></div>', unsafe_allow_html=True)
 
-    # 5 KPI METRICS (EXACTLY MATCHING GOOGLE SHEET)
     s1, s2, s3, s4, s5 = st.columns(5)
     s1.metric("ANNUAL TARGET", f"{tot_target:,}")
     accomplishment_pct = (tot_profiled / tot_target * 100) if tot_target > 0 else 0
