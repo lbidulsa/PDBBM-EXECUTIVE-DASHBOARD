@@ -322,19 +322,18 @@ if program_view == "🌐 Consolidated Executive Overview":
     tot_profiled = filtered_prov['Profiled_Clients'].sum()
     tot_male = 8264
     tot_female = 740
-    tot_managed = 4102
-    tot_interventions = 1175
+    tot_not_yet = 2170
 
     st.markdown('<div class="sec-card-scms"><span class="sec-title-scms">📦 1. SCMS (Social Case Management Service) Analytics</span></div>', unsafe_allow_html=True)
 
-    s1, s2, s3, s4, s5, s6 = st.columns(6)
+    # 5 KPI METRICS (EXACTLY MATCHING GOOGLE SHEET)
+    s1, s2, s3, s4, s5 = st.columns(5)
     s1.metric("ANNUAL TARGET", f"{tot_target:,}")
     accomplishment_pct = (tot_profiled / tot_target * 100) if tot_target > 0 else 0
     s2.metric("TOTAL PROFILED CLIENTS", f"{tot_profiled:,}", delta=f"↑ {accomplishment_pct:.1f}% Accomplished")
     s3.metric("👨 MALE CLIENTS", f"{tot_male:,}")
     s4.metric("👩 FEMALE CLIENTS", f"{tot_female:,}")
-    s5.metric("CASES MANAGED", f"{tot_managed:,}")
-    s6.metric("INTERVENTIONS DELIVERED", f"{tot_interventions:,}")
+    s5.metric("⏳ NOT YET PROFILED", f"{tot_not_yet:,}")
 
     st.markdown("<br>", unsafe_allow_html=True)
     sg1, sg2, sg3 = st.columns(3)
@@ -456,7 +455,6 @@ elif program_view == "📦 1. SCMS Analytics":
     st.markdown("---")
     st.subheader("📍 Tab 2: SCMS Target Per Province, Municipality & Affiliation (SCMS TARGET PER P-M)")
     
-    # Filter Tab 2 per selected provinces
     if selected_provinces:
         upper_selected = [p.upper() for p in selected_provinces]
         filtered_pm = df_scms_target_pm[df_scms_target_pm['Province'].isin(upper_selected)]
