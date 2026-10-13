@@ -178,7 +178,7 @@ main_header_logo = get_main_header_logo()
 sidebar_logo = get_sidebar_logo()
 plotly_template = "plotly_white"
 
-# NEW SCMS GOOGLE SHEET LINK
+# Live Google Sheets CSV Link for Background Processing Only
 SCMS_CSV_EXPORT_LINK = "https://docs.google.com/spreadsheets/d/1jjITQy_Z8w2A-gkghOTnzULjMaC3dx49Y8BCOeZmAyY/export?format=csv&gid=0"
 
 def export_to_excel_bytes(df):
@@ -205,7 +205,7 @@ def get_db_engine():
 
 engine = get_db_engine()
 
-# Fetch Live Count directly from the new SCMS Google Sheet CSV feed
+# Fetch Live Sheet Data in Background for Exact Beneficiaries Count
 @st.cache_data(ttl=180)
 def get_live_scms_sheet_data():
     try:
@@ -282,7 +282,6 @@ if sidebar_logo:
     st.sidebar.image(sidebar_logo, use_container_width=True)
     st.sidebar.markdown('</div>', unsafe_allow_html=True)
 
-# EXACT NAVIGATION Portal Options from Image
 program_view = st.sidebar.radio(
     "Select Portal View:",
     [
@@ -338,13 +337,13 @@ if program_view == "🌐 Consolidated Executive Overview":
     st.markdown('<div class="sec-card-scms"><span class="sec-title-scms">📦 1. SCMS (Social Case Management Service) Analytics</span></div>', unsafe_allow_html=True)
 
     s1, s2, s3, s4, s5, s6 = st.columns(6)
-    s1.metric("Annual Target", f"{tot_target:,}")
+    s1.metric("ANNUAL TARGET", f"{tot_target:,}")
     accomplishment_pct = (final_client_cnt / tot_target * 100) if tot_target > 0 else 0
-    s2.metric("Total Profiled Clients", f"{final_client_cnt:,}", delta=f"{accomplishment_pct:.1f}% Accomplished")
-    s3.metric("👨 Male Clients", f"{tot_male:,}")
-    s4.metric("👩 Female Clients", f"{tot_female:,}")
-    s5.metric("Cases Managed", f"{tot_managed:,}")
-    s6.metric("Interventions Delivered", f"{tot_interventions:,}")
+    s2.metric("TOTAL PROFILED CLIENTS", f"{final_client_cnt:,}", delta=f"↑ {accomplishment_pct:.1f}% Accomplished")
+    s3.metric("👨 MALE CLIENTS", f"{tot_male:,}")
+    s4.metric("👩 FEMALE CLIENTS", f"{tot_female:,}")
+    s5.metric("CASES MANAGED", f"{tot_managed:,}")
+    s6.metric("INTERVENTIONS DELIVERED", f"{tot_interventions:,}")
 
     st.markdown("<br>", unsafe_allow_html=True)
     sg1, sg2, sg3 = st.columns(3)
