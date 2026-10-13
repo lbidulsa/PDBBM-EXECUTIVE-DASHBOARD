@@ -178,8 +178,8 @@ main_header_logo = get_main_header_logo()
 sidebar_logo = get_sidebar_logo()
 plotly_template = "plotly_white"
 
-# Background CSV link for AppSheet Client Tab Count computation
-APPSHEET_CLIENT_TAB_CSV = "https://docs.google.com/spreadsheets/d/1I8ntXYDX8UtuaR7mgZUvAelrsPvqalPzhWiTUggfOlY/export?format=csv&gid=0"
+# NEW SCMS GOOGLE SHEET LINK
+SCMS_CSV_EXPORT_LINK = "https://docs.google.com/spreadsheets/d/1jjITQy_Z8w2A-gkghOTnzULjMaC3dx49Y8BCOeZmAyY/export?format=csv&gid=0"
 
 def export_to_excel_bytes(df):
     output = BytesIO()
@@ -191,7 +191,7 @@ def export_to_excel_bytes(df):
     return output.getvalue()
 
 # ---------------------------------------------------------
-# CENTRALIZED SUPABASE CLOUD DATABASE CONNECTION ENGINE
+# CENTRALIZED SUPABASE CLOUD DATABASE ENGINE & DATA LOADERS
 # ---------------------------------------------------------
 DEFAULT_DB_URL = "postgresql+psycopg2://postgres.oxyvjstdncnnefbkilaa:5GLJZg5tWE28Wud9@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres"
 
@@ -205,14 +205,14 @@ def get_db_engine():
 
 engine = get_db_engine()
 
-# Fetch Count Only from AppSheet Client Tab in Background
+# Fetch Live Count directly from the new SCMS Google Sheet CSV feed
 @st.cache_data(ttl=180)
-def get_appsheet_client_count():
+def get_live_scms_sheet_data():
     try:
-        df_appsheet = pd.read_csv(APPSHEET_CLIENT_TAB_CSV)
-        return len(df_appsheet)
+        df_sheet = pd.read_csv(SCMS_CSV_EXPORT_LINK)
+        return df_sheet
     except Exception:
-        return 0
+        return pd.DataFrame()
 
 @st.cache_data(ttl=300)
 def load_scms_summary_data():
@@ -259,7 +259,8 @@ def load_lgu_led_data():
         'Status': ['ONGOING', 'ONGOING', 'ONGOING', 'COMPLETED']
     })
 
-appsheet_total_count = get_appsheet_client_count()
+df_live_scms = get_live_scms_sheet_data()
+live_sheet_count = len(df_live_scms) if not df_live_scms.empty else 0
 df_scms_summary = load_scms_summary_data()
 df_lgu_summary = load_lgu_led_data()
 
@@ -281,6 +282,7 @@ if sidebar_logo:
     st.sidebar.image(sidebar_logo, use_container_width=True)
     st.sidebar.markdown('</div>', unsafe_allow_html=True)
 
+# EXACT NAVIGATION Portal Options from Image
 program_view = st.sidebar.radio(
     "Select Portal View:",
     [
@@ -301,7 +303,7 @@ selected_provinces = st.sidebar.multiselect(
 )
 
 st.sidebar.markdown("---")
-st.sidebar.info("🔒 **Data Privacy Active (RA 10173):** All individual beneficiary personal identity details are completely hidden. Analytics display aggregate counts and statistical metrics only.")
+st.sidebar.info("🔒 **Data Privacy Active (RA 10173):** All individual beneficiary personal identity details are protected. Analytics display aggregate counts and statistical metrics only.")
 
 st.sidebar.markdown("---")
 st.sidebar.markdown(
@@ -327,7 +329,7 @@ if program_view == "🌐 Consolidated Executive Overview":
 
     tot_target = f_scms['Annual_Target'].sum()
     tot_profiled = f_scms['Profiled_Clients'].sum()
-    final_client_cnt = appsheet_total_count if appsheet_total_count > 0 else tot_profiled
+    final_client_cnt = live_sheet_count if live_sheet_count > 0 else tot_profiled
     tot_male = f_scms['Male_Clients'].sum() if 'Male_Clients' in f_scms.columns else 0
     tot_female = f_scms['Female_Clients'].sum() if 'Female_Clients' in f_scms.columns else 0
     tot_managed = f_scms['Case_Managed'].sum()
@@ -455,21 +457,21 @@ if program_view == "🌐 Consolidated Executive Overview":
 # INDIVIDUAL MODULE ANALYTICS VIEWS
 # ---------------------------------------------------------
 elif program_view == "📦 1. SCMS Analytics":
-    st.markdown('<div class="glow-header-title">📦 SCMS Executive Analytics Scorecard</div>', unsafe_allow_html=True)
+    st.markdown('<div class="glow-header-title">📦 1. SCMS Analytics Scorecard</div>', unsafe_allow_html=True)
     st.markdown('<div class="privacy-banner">🔒 <b>Data Privacy Standard Active:</b> Displaying statistical summaries and province-level performance breakdown. Individual records are protected.</div>', unsafe_allow_html=True)
 
     st.subheader("📊 Regional Performance Summary Table")
     st.dataframe(df_scms_summary, use_container_width=True, hide_index=True)
 
 elif program_view == "🏛️ 2. PAMANA LGU-Led Analytics":
-    st.markdown('<div class="glow-header-title">🏛️ PAMANA LGU-Led Executive Analytics</div>', unsafe_allow_html=True)
+    st.markdown('<div class="glow-header-title">🏛️ 2. PAMANA LGU-Led Analytics</div>', unsafe_allow_html=True)
     st.markdown('<div class="privacy-banner">🔒 <b>Data Privacy Standard Active:</b> Project monitoring and financial scorecards rendered below for Region X scope.</div>', unsafe_allow_html=True)
 
     st.subheader("📋 LGU Program Aggregated Scorecard")
     st.dataframe(df_lgu_summary, use_container_width=True, hide_index=True)
 
 else:
-    st.markdown('<div class="glow-header-title">🕊️ PAMANA CDPD Analytics Portal</div>', unsafe_allow_html=True)
+    st.markdown('<div class="glow-header-title">🕊️ 3. PAMANA CDPD Analytics</div>', unsafe_allow_html=True)
     st.warning("⚠️ CDPD database analytics for Region X are currently under system synchronization.")
 
 # DEVELOPER FOOTER BADGE
