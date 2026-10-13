@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from sqlalchemy import create_engine, text
 import plotly.express as px
 import plotly.graph_objects as go
 import os
@@ -191,40 +190,36 @@ def export_to_excel_bytes(df):
     return output.getvalue()
 
 # ---------------------------------------------------------
-# LIVE PUBLISHED GOOGLE SHEET METRICS LOADER
+# DIRECT LIVE PUBLISHED GOOGLE SHEET LOADER (NO CACHE STUCK)
 # ---------------------------------------------------------
-@st.cache_data(ttl=60)
-def load_live_published_scms_analytics():
+def load_scms_live_data_fresh():
     try:
         df_sheet = pd.read_csv(PUBLISHED_SCMS_CSV_URL)
         if not df_sheet.empty:
             total_benes = len(df_sheet)
             
-            # Find sex/gender column dynamically
+            # Find sex column
             sex_cols = [c for c in df_sheet.columns if 'sex' in str(c).lower() or 'gender' in str(c).lower()]
-            male_cnt = 0
-            female_cnt = 0
             if sex_cols:
-                col = sex_cols[0]
-                male_cnt = len(df_sheet[df_sheet[col].astype(str).str.lower() == 'male'])
-                female_cnt = len(df_sheet[df_sheet[col].astype(str).str.lower() == 'female'])
+                male_cnt = len(df_sheet[df_sheet[sex_cols[0]].astype(str).str.strip().str.lower() == 'male'])
+                female_cnt = len(df_sheet[df_sheet[sex_cols[0]].astype(str).str.strip().str.lower() == 'female'])
             else:
-                male_cnt = int(total_benes * 0.726)
-                female_cnt = total_benes - male_cnt
+                male_cnt = 0
+                female_cnt = 0
 
-            # Find province column dynamically
+            # Find province column
             prov_cols = [c for c in df_sheet.columns if 'province' in str(c).lower()]
             if prov_cols:
                 prov_df = df_sheet[prov_cols[0]].value_counts().reset_index()
                 prov_df.columns = ['Province', 'Profiled_Clients']
             else:
-                prov_df = pd.DataFrame()
+                prov_df = pd.DataFrame(columns=['Province', 'Profiled_Clients'])
 
             return total_benes, male_cnt, female_cnt, prov_df, True
-    except Exception:
-        pass
+    except Exception as e:
+        st.error(f"Error reading live Google Sheet: {e}")
     
-    return 0, 0, 0, pd.DataFrame(), False
+    return 0, 0, 0, pd.DataFrame(columns=['Province', 'Profiled_Clients']), False
 
 @st.cache_data(ttl=300)
 def load_lgu_led_data():
@@ -237,23 +232,20 @@ def load_lgu_led_data():
         'Status': ['ONGOING', 'ONGOING', 'ONGOING', 'COMPLETED']
     })
 
-live_total_benes, live_male, live_female, df_live_prov, is_live_success = load_live_published_scms_analytics()
+live_total_benes, live_male, live_female, df_live_prov, is_live_success = load_scms_live_data_fresh()
 df_lgu_summary = load_lgu_led_data()
 
-# Target vs Actual Setup
+# Target data mapping
 target_provinces_df = pd.DataFrame({
     'Province': ['Lanao del Sur', 'Lanao del Norte', 'Misamis Oriental', 'Bukidnon', 'Misamis Occidental'],
     'Annual_Target': [6070, 1990, 450, 377, 150]
 })
 
-if is_live_success and not df_live_prov.empty:
+if not df_live_prov.empty:
     f_scms = pd.merge(target_provinces_df, df_live_prov, on='Province', how='left').fillna(0)
 else:
-    target_provinces_df['Profiled_Clients'] = [5121, 1977, 290, 377, 150]
+    target_provinces_df['Profiled_Clients'] = 0
     f_scms = target_provinces_df
-    live_total_benes = f_scms['Profiled_Clients'].sum()
-    live_male = int(live_total_benes * 0.726)
-    live_female = live_total_benes - live_male
 
 # ---------------------------------------------------------
 # HEADER & SIDEBAR NAVIGATION
@@ -318,7 +310,7 @@ if program_view == "🌐 Consolidated Executive Overview":
         filtered_scms = f_scms
 
     tot_target = filtered_scms['Annual_Target'].sum()
-    final_client_cnt = filtered_scms['Profiled_Clients'].sum()
+    final_client_cnt = live_total_benes if is_live_success else filtered_scms['Profiled_Clients'].sum()
     tot_male = live_male
     tot_female = live_female
     tot_managed = int(final_client_cnt * 0.52)
