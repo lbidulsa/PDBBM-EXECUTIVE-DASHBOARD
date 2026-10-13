@@ -177,9 +177,6 @@ main_header_logo = get_main_header_logo()
 sidebar_logo = get_sidebar_logo()
 plotly_template = "plotly_white"
 
-# PUBLISHED GOOGLE SHEET CSV FEED URL
-PUBLISHED_SCMS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSiS3wDEdJUU6Xh8jL66xpLMz8RoDnv-Z32rcF6TeCHg_UKwAutb6_VbMyViNeMi7R9SyiEm-5bU9S_/pub?gid=0&single=true&output=csv"
-
 def export_to_excel_bytes(df):
     output = BytesIO()
     try:
@@ -190,36 +187,61 @@ def export_to_excel_bytes(df):
     return output.getvalue()
 
 # ---------------------------------------------------------
-# DIRECT LIVE PUBLISHED GOOGLE SHEET LOADER (NO CACHE STUCK)
+# DATA STRUCTURES (TAB 1: ACTUAL NUMBER OF BENES)
 # ---------------------------------------------------------
-def load_scms_live_data_fresh():
-    try:
-        df_sheet = pd.read_csv(PUBLISHED_SCMS_CSV_URL)
-        if not df_sheet.empty:
-            total_benes = len(df_sheet)
-            
-            # Find sex column
-            sex_cols = [c for c in df_sheet.columns if 'sex' in str(c).lower() or 'gender' in str(c).lower()]
-            if sex_cols:
-                male_cnt = len(df_sheet[df_sheet[sex_cols[0]].astype(str).str.strip().str.lower() == 'male'])
-                female_cnt = len(df_sheet[df_sheet[sex_cols[0]].astype(str).str.strip().str.lower() == 'female'])
-            else:
-                male_cnt = 0
-                female_cnt = 0
+df_scms_affiliation = pd.DataFrame({
+    'Affiliation': ['MILF', 'MNLF', 'FR', 'DPAGS', 'KAPATIRAN', 'MSAP'],
+    'Target': [7472, 606, 3067, 0, 29, 0],
+    'Male': [6784, 27, 1429, 0, 24, 0],
+    'Female': [355, 2, 380, 0, 3, 0],
+    'Total_Profiled': [7139, 29, 1809, 0, 27, 0],
+    'Not_Yet_Profiled': [333, 577, 1258, 0, 2, 0]
+})
 
-            # Find province column
-            prov_cols = [c for c in df_sheet.columns if 'province' in str(c).lower()]
-            if prov_cols:
-                prov_df = df_sheet[prov_cols[0]].value_counts().reset_index()
-                prov_df.columns = ['Province', 'Profiled_Clients']
-            else:
-                prov_df = pd.DataFrame(columns=['Province', 'Profiled_Clients'])
+df_scms_province = pd.DataFrame({
+    'Province': ['Bukidnon', 'Lanao del Norte', 'Lanao del Sur', 'Misamis Occidental', 'Misamis Oriental'],
+    'NPA': [1377, 0, 0, 150, 282],
+    'KAPATIRAN': [20, 0, 0, 0, 7],
+    'MILF': [36, 1977, 5121, 2, 3],
+    'MNLF': [0, 0, 29, 0, 0],
+    'Profiled_Clients': [1433, 1977, 5150, 152, 292]
+})
 
-            return total_benes, male_cnt, female_cnt, prov_df, True
-    except Exception as e:
-        st.error(f"Error reading live Google Sheet: {e}")
-    
-    return 0, 0, 0, pd.DataFrame(columns=['Province', 'Profiled_Clients']), False
+# ---------------------------------------------------------
+# DATA STRUCTURE (TAB 2: SCMS TARGET PER P-M)
+# ---------------------------------------------------------
+df_scms_target_pm = pd.DataFrame({
+    'Province': [
+        'MISAMIS ORIENTAL', 'MISAMIS ORIENTAL', 'MISAMIS ORIENTAL', 'MISAMIS ORIENTAL', 
+        'MISAMIS ORIENTAL', 'MISAMIS ORIENTAL', 'MISAMIS ORIENTAL', 'MISAMIS ORIENTAL', 
+        'MISAMIS ORIENTAL', 'MISAMIS ORIENTAL', 'MISAMIS ORIENTAL', 'MISAMIS ORIENTAL', 
+        'MISAMIS ORIENTAL', 'BUKIDNON', 'BUKIDNON', 'BUKIDNON', 'BUKIDNON', 'BUKIDNON', 
+        'BUKIDNON', 'BUKIDNON', 'BUKIDNON', 'BUKIDNON', 'BUKIDNON', 'BUKIDNON', 
+        'BUKIDNON', 'BUKIDNON', 'BUKIDNON'
+    ],
+    'Municipality': [
+        'Balingasag', 'Balingasag', 'Gingoog City', 'Lagonglong', 'Medina', 'Claveria', 
+        'Manticao', 'Opol', 'Tagoloan', 'Cagayan de Oro City', 'Cagayan de Oro City', 
+        'Cagayan de Oro City', 'Salay', 'NO ADDRESS', 'Kadingilan', 'Kadingilan', 
+        'Kalilangan', 'Kalilangan', 'San Fernando', 'Valencia City', 'Valencia City', 
+        'Sumilao', 'Baungon', 'Cabanglasan', 'Maramag', 'Maramag', 'Kitaotao'
+    ],
+    'Affiliation': [
+        'MILF', 'CPP-NPA', 'CPP-NPA', 'CPP-NPA', 'CPP-NPA', 'CPP-NPA', 
+        'CPP-NPA', 'CPP-NPA', 'CPP-NPA', 'MILF', 'CPP-NPA', 
+        'KAPATIRAN', 'CPP-NPA', 'CPP-NPA', 'CPP-NPA', 'MILF', 
+        'CPP-NPA', 'MILF', 'CPP-NPA', 'CPP-NPA', 'MILF', 
+        'CPP-NPA', 'CPP-NPA', 'CPP-NPA', 'CPP-NPA', 'KAPATIRAN', 'CPP-NPA'
+    ],
+    'Number of Clients': [
+        2, 35, 85, 39, 9, 115, 5, 2, 1, 2, 140, 7, 32, 
+        87, 1, 2, 2, 16, 438, 178, 3, 37, 2, 327, 16, 8, 119
+    ],
+    'Total Target Per Province': [
+        474, 474, 474, 474, 474, 474, 474, 474, 474, 474, 474, 474, 474,
+        2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488
+    ]
+})
 
 @st.cache_data(ttl=300)
 def load_lgu_led_data():
@@ -232,20 +254,7 @@ def load_lgu_led_data():
         'Status': ['ONGOING', 'ONGOING', 'ONGOING', 'COMPLETED']
     })
 
-live_total_benes, live_male, live_female, df_live_prov, is_live_success = load_scms_live_data_fresh()
 df_lgu_summary = load_lgu_led_data()
-
-# Target data mapping
-target_provinces_df = pd.DataFrame({
-    'Province': ['Lanao del Sur', 'Lanao del Norte', 'Misamis Oriental', 'Bukidnon', 'Misamis Occidental'],
-    'Annual_Target': [6070, 1990, 450, 377, 150]
-})
-
-if not df_live_prov.empty:
-    f_scms = pd.merge(target_provinces_df, df_live_prov, on='Province', how='left').fillna(0)
-else:
-    target_provinces_df['Profiled_Clients'] = 0
-    f_scms = target_provinces_df
 
 # ---------------------------------------------------------
 # HEADER & SIDEBAR NAVIGATION
@@ -305,23 +314,23 @@ st.sidebar.markdown(
 if program_view == "🌐 Consolidated Executive Overview":
     
     if selected_provinces:
-        filtered_scms = f_scms[f_scms['Province'].isin(selected_provinces)]
+        filtered_prov = df_scms_province[df_scms_province['Province'].isin(selected_provinces)]
     else:
-        filtered_scms = f_scms
+        filtered_prov = df_scms_province
 
-    tot_target = filtered_scms['Annual_Target'].sum()
-    final_client_cnt = live_total_benes if is_live_success else filtered_scms['Profiled_Clients'].sum()
-    tot_male = live_male
-    tot_female = live_female
-    tot_managed = int(final_client_cnt * 0.52)
-    tot_interventions = int(final_client_cnt * 0.15)
+    tot_target = 11174
+    tot_profiled = filtered_prov['Profiled_Clients'].sum()
+    tot_male = 8264
+    tot_female = 740
+    tot_managed = 4102
+    tot_interventions = 1175
 
     st.markdown('<div class="sec-card-scms"><span class="sec-title-scms">📦 1. SCMS (Social Case Management Service) Analytics</span></div>', unsafe_allow_html=True)
 
     s1, s2, s3, s4, s5, s6 = st.columns(6)
     s1.metric("ANNUAL TARGET", f"{tot_target:,}")
-    accomplishment_pct = (final_client_cnt / tot_target * 100) if tot_target > 0 else 0
-    s2.metric("TOTAL PROFILED CLIENTS", f"{final_client_cnt:,}", delta=f"↑ {accomplishment_pct:.1f}% Accomplished")
+    accomplishment_pct = (tot_profiled / tot_target * 100) if tot_target > 0 else 0
+    s2.metric("TOTAL PROFILED CLIENTS", f"{tot_profiled:,}", delta=f"↑ {accomplishment_pct:.1f}% Accomplished")
     s3.metric("👨 MALE CLIENTS", f"{tot_male:,}")
     s4.metric("👩 FEMALE CLIENTS", f"{tot_female:,}")
     s5.metric("CASES MANAGED", f"{tot_managed:,}")
@@ -331,7 +340,7 @@ if program_view == "🌐 Consolidated Executive Overview":
     sg1, sg2, sg3 = st.columns(3)
     with sg1:
         st.subheader("📊 Profiled Clients per Province (Region X)")
-        fig_prov = px.bar(filtered_scms, x='Province', y='Profiled_Clients', color='Province', text_auto=',.0f', template=plotly_template)
+        fig_prov = px.bar(filtered_prov, x='Province', y='Profiled_Clients', color='Province', text_auto=',.0f', template=plotly_template)
         fig_prov.update_layout(margin=dict(t=20, b=20, l=20, r=20), showlegend=False)
         st.plotly_chart(fig_prov, use_container_width=True)
 
@@ -425,7 +434,7 @@ if program_view == "🌐 Consolidated Executive Overview":
     st.subheader("📥 Export Aggregated Executive Analytics Summary")
     col_exp1, col_exp2 = st.columns([1, 2])
     with col_exp1:
-        scms_bytes = export_to_excel_bytes(filtered_scms)
+        scms_bytes = export_to_excel_bytes(filtered_prov)
         st.download_button(
             label="📥 Download Aggregated SCMS Summary (.xlsx)",
             data=scms_bytes,
@@ -441,8 +450,24 @@ elif program_view == "📦 1. SCMS Analytics":
     st.markdown('<div class="glow-header-title">📦 1. SCMS Analytics Scorecard</div>', unsafe_allow_html=True)
     st.markdown('<div class="privacy-banner">🔒 <b>Data Privacy Standard Active:</b> Displaying statistical summaries and province-level performance breakdown. Individual records are protected.</div>', unsafe_allow_html=True)
 
-    st.subheader("📊 Regional Performance Summary Table")
-    st.dataframe(f_scms, use_container_width=True, hide_index=True)
+    st.subheader("📊 Tab 1: Number of Target Per Affiliation")
+    st.dataframe(df_scms_affiliation, use_container_width=True, hide_index=True)
+
+    st.markdown("---")
+    st.subheader("📍 Tab 2: SCMS Target Per Province, Municipality & Affiliation (SCMS TARGET PER P-M)")
+    
+    # Filter Tab 2 per selected provinces
+    if selected_provinces:
+        upper_selected = [p.upper() for p in selected_provinces]
+        filtered_pm = df_scms_target_pm[df_scms_target_pm['Province'].isin(upper_selected)]
+    else:
+        filtered_pm = df_scms_target_pm
+
+    st.dataframe(filtered_pm, use_container_width=True, hide_index=True)
+
+    st.markdown("---")
+    st.subheader("🗺️ Tab 1: Actual Number of Beneficiaries Per Province & Affiliation")
+    st.dataframe(df_scms_province, use_container_width=True, hide_index=True)
 
 elif program_view == "🏛️ 2. PAMANA LGU-Led Analytics":
     st.markdown('<div class="glow-header-title">🏛️ 2. PAMANA LGU-Led Analytics</div>', unsafe_allow_html=True)
