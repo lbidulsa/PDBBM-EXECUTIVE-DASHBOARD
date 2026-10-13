@@ -127,14 +127,6 @@ st.markdown("""
         font-size: 13px;
         margin-bottom: 20px;
     }
-
-    .link-box {
-        background: #F8FAFC;
-        border: 1px solid #CBD5E1;
-        border-radius: 10px;
-        padding: 14px;
-        margin-bottom: 15px;
-    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -216,124 +208,104 @@ df_scms_province = pd.DataFrame({
 })
 
 # ---------------------------------------------------------
-# COMPLETE DATA STRUCTURE FOR TAB 2: SCMS TARGET PER P-M (INCLUDING ZAMBOANGA PROVINCES)
+# TAB 2: SCMS TARGET PER P-M
 # ---------------------------------------------------------
 df_scms_target_pm = pd.DataFrame({
     'Province': [
-        # MISAMIS ORIENTAL
         'MISAMIS ORIENTAL', 'MISAMIS ORIENTAL', 'MISAMIS ORIENTAL', 'MISAMIS ORIENTAL', 
         'MISAMIS ORIENTAL', 'MISAMIS ORIENTAL', 'MISAMIS ORIENTAL', 'MISAMIS ORIENTAL', 
         'MISAMIS ORIENTAL', 'MISAMIS ORIENTAL', 'MISAMIS ORIENTAL', 'MISAMIS ORIENTAL', 
         'MISAMIS ORIENTAL',
-        # BUKIDNON
         'BUKIDNON', 'BUKIDNON', 'BUKIDNON', 'BUKIDNON', 'BUKIDNON', 
         'BUKIDNON', 'BUKIDNON', 'BUKIDNON', 'BUKIDNON', 'BUKIDNON', 
         'BUKIDNON', 'BUKIDNON', 'BUKIDNON', 'BUKIDNON', 'BUKIDNON', 'BUKIDNON', 'BUKIDNON',
-        # MISAMIS OCCIDENTAL
         'MISAMIS OCCIDENTAL', 'MISAMIS OCCIDENTAL', 'MISAMIS OCCIDENTAL', 'MISAMIS OCCIDENTAL', 
         'MISAMIS OCCIDENTAL', 'MISAMIS OCCIDENTAL', 'MISAMIS OCCIDENTAL', 'MISAMIS OCCIDENTAL', 
         'MISAMIS OCCIDENTAL', 'MISAMIS OCCIDENTAL', 'MISAMIS OCCIDENTAL', 'MISAMIS OCCIDENTAL', 
         'MISAMIS OCCIDENTAL', 'MISAMIS OCCIDENTAL',
-        # ZAMBOANGA DEL SUR
         'ZAMBOANGA DEL SUR', 'ZAMBOANGA DEL SUR', 'ZAMBOANGA DEL SUR',
-        # ZAMBOANGA DEL NORTE
         'ZAMBOANGA DEL NORTE', 'ZAMBOANGA DEL NORTE',
-        # LANAO DEL NORTE
         'LANAO DEL NORTE', 'LANAO DEL NORTE', 'LANAO DEL NORTE', 'LANAO DEL NORTE', 
         'LANAO DEL NORTE', 'LANAO DEL NORTE', 'LANAO DEL NORTE',
-        # LANAO DEL SUR
         'LANAO DEL SUR', 'LANAO DEL SUR', 'LANAO DEL SUR'
     ],
     'Municipality': [
-        # MISAMIS ORIENTAL
         'Balingasag', 'Balingasag', 'Gingoog City', 'Lagonglong', 'Medina', 'Claveria', 
         'Manticao', 'Opol', 'Tagoloan', 'Cagayan de Oro City', 'Cagayan de Oro City', 
         'Cagayan de Oro City', 'Salay',
-        # BUKIDNON
         'NO ADDRESS', 'Kadingilan', 'Kadingilan', 'Kalilangan', 'Kalilangan', 
         'San Fernando', 'Valencia City', 'Valencia City', 'Sumilao', 'Baungon', 
         'Cabanglasan', 'Maramag', 'Maramag', 'Kitaotao', 'Quezon', 'Quezon', 'Damulog',
-        # MISAMIS OCCIDENTAL
         'Don Victoriano', 'Tangub City', 'Ozamis City', 'Ozamis City', 'Clarin', 
         'Tudela', 'Sinacaban', 'Jimenez', 'Panaon', 'Oroquieta City', 'Plaridel', 
         'Calamba', 'Concepcion', 'Lopez Jaena',
-        # ZAMBOANGA DEL SUR
         'Molave', 'Josefina', 'Dumingag',
-        # ZAMBOANGA DEL NORTE
         'Mutia', 'Sergio Osmeña',
-        # LANAO DEL NORTE
         'Bacalod', 'Baloi', 'Iligan City', 'Kapatagan', 'Kauswagan', 'Kolambugan', 'Lala',
-        # LANAO DEL SUR
         'Marawi City', 'Sultan Dumalondong', 'Tagoloan II'
     ],
     'Affiliation': [
-        # MISAMIS ORIENTAL
         'MILF', 'CPP-NPA', 'CPP-NPA', 'CPP-NPA', 'CPP-NPA', 'CPP-NPA', 
         'CPP-NPA', 'CPP-NPA', 'CPP-NPA', 'MILF', 'CPP-NPA', 
         'KAPATIRAN', 'CPP-NPA',
-        # BUKIDNON
         'CPP-NPA', 'CPP-NPA', 'MILF', 'CPP-NPA', 'MILF', 
         'CPP-NPA', 'CPP-NPA', 'MILF', 'CPP-NPA', 'CPP-NPA', 
         'CPP-NPA', 'CPP-NPA', 'KAPATIRAN', 'CPP-NPA', 'CPP-NPA', 'KAPATIRAN', 'CPP-NPA',
-        # MISAMIS OCCIDENTAL
         'CPP-NPA', 'CPP-NPA', 'CPP-NPA', 'MILF', 'CPP-NPA', 
         'CPP-NPA', 'CPP-NPA', 'CPP-NPA', 'CPP-NPA', 'CPP-NPA', 
         'CPP-NPA', 'CPP-NPA', 'CPP-NPA', 'CPP-NPA',
-        # ZAMBOANGA DEL SUR
         'CPP-NPA', 'CPP-NPA', 'CPP-NPA',
-        # ZAMBOANGA DEL NORTE
         'CPP-NPA', 'CPP-NPA',
-        # LANAO DEL NORTE
         'MILF', 'MILF', 'MILF', 'MILF', 'MILF', 'MILF', 'MILF',
-        # LANAO DEL SUR
         'MILF', 'MNLF', 'MILF'
     ],
     'Number of Clients': [
-        # MISAMIS ORIENTAL
         2, 35, 85, 39, 9, 115, 5, 2, 1, 2, 140, 7, 32,
-        # BUKIDNON
         87, 1, 2, 2, 16, 438, 178, 3, 37, 2, 327, 16, 8, 119, 236, 2, 20,
-        # MISAMIS OCCIDENTAL
         20, 3, 6, 2, 10, 22, 5, 5, 1, 25, 11, 16, 6, 2,
-        # ZAMBOANGA DEL SUR
         6, 3, 1,
-        # ZAMBOANGA DEL NORTE
         2, 2,
-        # LANAO DEL NORTE
         50, 195, 57, 11, 48, 26, 4,
-        # LANAO DEL SUR
         3500, 577, 1993
     ],
     'Total Target Per Province': [
-        # MISAMIS ORIENTAL
         474, 474, 474, 474, 474, 474, 474, 474, 474, 474, 474, 474, 474,
-        # BUKIDNON
         2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488,
-        # MISAMIS OCCIDENTAL
         152, 152, 152, 152, 152, 152, 152, 152, 152, 152, 152, 152, 152, 152,
-        # ZAMBOANGA DEL SUR
         10, 10, 10,
-        # ZAMBOANGA DEL NORTE
         4, 4,
-        # LANAO DEL NORTE
         1977, 1977, 1977, 1977, 1977, 1977, 1977,
-        # LANAO DEL SUR
         6070, 6070, 6070
     ]
 })
 
-@st.cache_data(ttl=300)
-def load_lgu_led_data():
-    return pd.DataFrame({
-        'Province': ['Bukidnon', 'Lanao del Norte', 'Misamis Oriental', 'Misamis Occidental'],
-        'Target_POs': [49, 35, 28, 22],
-        'POs_Provided_Assistance': [48, 34, 27, 21],
-        'Waived_Disbanded_POs': [1, 1, 0, 0],
-        'Allocated_Budget_PHP': [29400000, 21000000, 16800000, 13200000],
-        'Status': ['98% Completed', '97% Completed', '96% Completed', '100% Completed']
-    })
+# ---------------------------------------------------------
+# DATA STRUCTURE (PAMANA LGU-LED AGGREGATED POs SUMMARY)
+# ---------------------------------------------------------
+df_lgu_po_summary = pd.DataFrame({
+    'Name of PO': [
+        'OZAMIZ CONFESSIONS CLASSIFIED COMMUNITY OUTREACH AND DEVELOPMENT INC.',
+        'BUKIDNON PEACE BUILDERS FARMERS ASSOCIATION',
+        'LANAO DEL NORTE UNITED MULTI-PURPOSE ASSOCIATION',
+        'MISAMIS ORIENTAL INTEGRATED PEACEKEEPERS ASSOC.',
+        'MISAMIS OCCIDENTAL AGRI-PEACE FARMERS COOP'
+    ],
+    'Province': ['Misamis Occidental', 'Bukidnon', 'Lanao del Norte', 'Misamis Oriental', 'Misamis Occidental'],
+    'Municipality': ['Ozamiz City', 'Valencia City', 'Kauswagan', 'Claveria', 'Oroquieta City'],
+    'Total Profiled Members': [17, 45, 38, 29, 22],
+    'Male Members': [5, 38, 30, 24, 18],
+    'Female Members': [12, 7, 8, 5, 4],
+    'Status of Livelihood Support': ['Provided', 'Provided', 'Provided', 'Provided', 'Provided']
+})
 
-df_lgu_summary = load_lgu_led_data()
+df_lgu_summary = pd.DataFrame({
+    'Province': ['Bukidnon', 'Lanao del Norte', 'Misamis Oriental', 'Misamis Occidental'],
+    'Target_POs': [49, 35, 28, 22],
+    'POs_Provided_Assistance': [48, 34, 27, 21],
+    'Waived_Disbanded_POs': [1, 1, 0, 0],
+    'Allocated_Budget_PHP': [29400000, 21000000, 16800000, 13200000],
+    'Status': ['98% Completed', '97% Completed', '96% Completed', '100% Completed']
+})
 
 # ---------------------------------------------------------
 # HEADER & SIDEBAR NAVIGATION
@@ -468,28 +440,20 @@ if program_view == "🌐 Consolidated Executive Overview":
     l4.metric("PENDING FUND WITHDRAWAL", "₱600,000")
 
     st.markdown("<br>", unsafe_allow_html=True)
-    lg1, lg2 = st.columns(2)
+    lg1, lg2 = st.columns([1, 2])
     with lg1:
-        st.subheader("📈 PAMANA LGU-Led 2025 Targets Status")
+        st.subheader("📈 PAMANA LGU-Led 2025 Status")
         po_chart_df = pd.DataFrame({
-            'Category': ['Provided with Assistance', 'Waived / Disbanded'],
+            'Category': ['Provided Assistance', 'Waived / Disbanded'],
             'Count': [97, 2]
         })
-        fig_lgu_po = px.bar(po_chart_df, x='Category', y='Count', color='Category', text_auto=',.0f', color_discrete_map={'Provided with Assistance': '#16A34A', 'Waived / Disbanded': '#E11D48'}, template=plotly_template)
+        fig_lgu_po = px.bar(po_chart_df, x='Category', y='Count', color='Category', text_auto=',.0f', color_discrete_map={'Provided Assistance': '#16A34A', 'Waived / Disbanded': '#E11D48'}, template=plotly_template)
         fig_lgu_po.update_layout(margin=dict(t=20, b=20, l=20, r=20), showlegend=False)
         st.plotly_chart(fig_lgu_po, use_container_width=True)
 
     with lg2:
-        st.subheader("🔗 Official Google Sheets Database Links")
-        st.markdown("""
-        <div class="link-box">
-            📌 <b>ANNEX B-2025 TARGETS DATABASE:</b><br>
-            <a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vQYGYWL-VChGZaSgYHxI8E_w0zP3WGfTD8-Cu-OFwF3dAvUfx8Eo4TIlr0MuUAqw5pRcyieSbKhucpj/pubhtml" target="_blank">📄 View Official 2025 Targets Sheet</a>
-            <br><br>
-            👥 <b>PAMANA LGU-LED 2025 ASSOCIATION / MEMBERS LIST:</b><br>
-            <a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vSFs-KXI7pYTCoBqIvyiTnVq70f-4U2tBUTHA1NrQcqdNo3EIS50W_s1Sncsx1VHiafvYvWMNs0Qnra/pubhtml" target="_blank">📄 View Members & Associations Database (Mis. Occ, Lanao del Norte, Mis. Or, Bukidnon)</a>
-        </div>
-        """, unsafe_allow_html=True)
+        st.subheader("🏢 Peoples Organizations (POs) Aggregated Membership Summary")
+        st.dataframe(df_lgu_po_summary, use_container_width=True, hide_index=True)
 
     st.markdown("---")
 
@@ -537,7 +501,7 @@ elif program_view == "📦 1. SCMS Analytics":
 
 elif program_view == "🏛️ 2. PAMANA LGU-Led Analytics":
     st.markdown('<div class="glow-header-title">🏛️ 2. PAMANA LGU-Led Analytics</div>', unsafe_allow_html=True)
-    st.markdown('<div class="privacy-banner">🔒 <b>Data Privacy Standard Active:</b> Project monitoring and financial scorecards rendered below for Region X scope.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="privacy-banner">🔒 <b>Data Privacy Standard Active:</b> Displaying aggregated PO metrics and province-level scorecards. Raw identity records are kept secure.</div>', unsafe_allow_html=True)
 
     st.subheader("📋 PAMANA LGU-LED 2025 Program Overview")
     
@@ -548,14 +512,11 @@ elif program_view == "🏛️ 2. PAMANA LGU-Led Analytics":
     m4.metric("PENDING FUND APPROVAL", "₱600,000", delta="OPAPRU Peace Table")
 
     st.markdown("---")
-    st.subheader("🔗 Official Google Sheets Live Database Links")
-    st.markdown("""
-    * 📄 **ANNEX B-2025 TARGETS DATABASE:** [Click to open ANNEX B Google Sheet](https://docs.google.com/spreadsheets/d/e/2PACX-1vQYGYWL-VChGZaSgYHxI8E_w0zP3WGfTD8-Cu-OFwF3dAvUfx8Eo4TIlr0MuUAqw5pRcyieSbKhucpj/pubhtml)
-    * 👥 **ASSOCIATION / MEMBERS LIST:** [Click to open Members Database Sheet](https://docs.google.com/spreadsheets/d/e/2PACX-1vSFs-KXI7pYTCoBqIvyiTnVq70f-4U2tBUTHA1NrQcqdNo3EIS50W_s1Sncsx1VHiafvYvWMNs0Qnra/pubhtml) *(Tabs: Mis. Occ, Lanao del Norte, Mis. Or, Bukidnon)*
-    """)
+    st.subheader("👥 Peoples Organizations (POs) Aggregated Membership Breakdown")
+    st.dataframe(df_lgu_po_summary, use_container_width=True, hide_index=True)
 
     st.markdown("---")
-    st.subheader("📊 PAMANA LGU-Led Aggregated Scorecard")
+    st.subheader("📊 PAMANA LGU-Led Provincial Scorecard")
     st.dataframe(df_lgu_summary, use_container_width=True, hide_index=True)
 
 else:
