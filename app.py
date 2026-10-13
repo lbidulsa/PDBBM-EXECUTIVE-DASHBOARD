@@ -127,6 +127,14 @@ st.markdown("""
         font-size: 13px;
         margin-bottom: 20px;
     }
+
+    .link-box {
+        background: #F8FAFC;
+        border: 1px solid #CBD5E1;
+        border-radius: 10px;
+        padding: 14px;
+        margin-bottom: 15px;
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -301,7 +309,7 @@ df_scms_target_pm = pd.DataFrame({
         474, 474, 474, 474, 474, 474, 474, 474, 474, 474, 474, 474, 474,
         # BUKIDNON
         2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488,
-        # MISAMIS OCCIDENTAL (Includes nearby profiled areas under same count)
+        # MISAMIS OCCIDENTAL
         152, 152, 152, 152, 152, 152, 152, 152, 152, 152, 152, 152, 152, 152,
         # ZAMBOANGA DEL SUR
         10, 10, 10,
@@ -318,11 +326,11 @@ df_scms_target_pm = pd.DataFrame({
 def load_lgu_led_data():
     return pd.DataFrame({
         'Province': ['Bukidnon', 'Lanao del Norte', 'Misamis Oriental', 'Misamis Occidental'],
-        'Target_SubProjects': [49, 35, 28, 22],
-        'Allocated_Budget_PHP': [14700000, 10500000, 8400000, 6600000],
-        'Profiled_Beneficiaries': [2150, 1840, 1260, 980],
-        'Completed_Social_Prep': [49, 32, 25, 22],
-        'Status': ['ONGOING', 'ONGOING', 'ONGOING', 'COMPLETED']
+        'Target_POs': [49, 35, 28, 22],
+        'POs_Provided_Assistance': [48, 34, 27, 21],
+        'Waived_Disbanded_POs': [1, 1, 0, 0],
+        'Allocated_Budget_PHP': [29400000, 21000000, 16800000, 13200000],
+        'Status': ['98% Completed', '97% Completed', '96% Completed', '100% Completed']
     })
 
 df_lgu_summary = load_lgu_led_data()
@@ -453,45 +461,35 @@ if program_view == "🌐 Consolidated Executive Overview":
     # SEQUENCE 2: PAMANA LGU-LED OVERVIEW
     st.markdown('<div class="sec-card-lgu"><span class="sec-title-lgu">🏛️ 2. PAMANA LGU-Led Program Analytics & Performance</span></div>', unsafe_allow_html=True)
 
-    if selected_provinces:
-        f_lgu = df_lgu_summary[df_lgu_summary['Province'].isin(selected_provinces)]
-    else:
-        f_lgu = df_lgu_summary
-
-    tot_sp = f_lgu['Target_SubProjects'].sum()
-    tot_budget = f_lgu['Allocated_Budget_PHP'].sum()
-    tot_lgu_ben = f_lgu['Profiled_Beneficiaries'].sum()
-
     l1, l2, l3, l4 = st.columns(4)
-    l1.metric("Target LGU Sub-Projects", f"{tot_sp:,}")
-    l2.metric("Total GAA Allocation", f"₱{tot_budget/1e6:,.1f}M")
-    l3.metric("Profiled LGU Beneficiaries", f"{tot_lgu_ben:,}")
-    l4.metric("Social Prep Stage", "100% Completed")
+    l1.metric("TARGET POs", "99 POs")
+    l2.metric("PROVIDED WITH ASSISTANCE", "97 POs", delta="↑ 98.0% Accomplished")
+    l3.metric("WAIVED / DISBANDED POs", "2 POs", delta="Pending OPAPRU Approval", delta_color="inverse")
+    l4.metric("PENDING FUND WITHDRAWAL", "₱600,000")
 
     st.markdown("<br>", unsafe_allow_html=True)
-    lg1, lg2, lg3 = st.columns(3)
+    lg1, lg2 = st.columns(2)
     with lg1:
-        st.subheader("📈 LGU Projects per Province")
-        fig_lgu_sp = px.bar(f_lgu, x='Province', y='Target_SubProjects', color='Province', text_auto=',.0f', template=plotly_template)
-        fig_lgu_sp.update_layout(margin=dict(t=20, b=20, l=20, r=20), showlegend=False)
-        st.plotly_chart(fig_lgu_sp, use_container_width=True)
+        st.subheader("📈 PAMANA LGU-Led 2025 Targets Status")
+        po_chart_df = pd.DataFrame({
+            'Category': ['Provided with Assistance', 'Waived / Disbanded'],
+            'Count': [97, 2]
+        })
+        fig_lgu_po = px.bar(po_chart_df, x='Category', y='Count', color='Category', text_auto=',.0f', color_discrete_map={'Provided with Assistance': '#16A34A', 'Waived / Disbanded': '#E11D48'}, template=plotly_template)
+        fig_lgu_po.update_layout(margin=dict(t=20, b=20, l=20, r=20), showlegend=False)
+        st.plotly_chart(fig_lgu_po, use_container_width=True)
 
     with lg2:
-        st.subheader("💰 Financial Allocation (PHP)")
-        fig_lgu_fin = px.bar(f_lgu, x='Province', y='Allocated_Budget_PHP', color='Province', text_auto='.2s', template=plotly_template)
-        fig_lgu_fin.update_layout(margin=dict(t=20, b=20, l=20, r=20), showlegend=False)
-        st.plotly_chart(fig_lgu_fin, use_container_width=True)
-
-    with lg3:
-        st.subheader("🎯 LGU Program Indicators")
-        radar_df = pd.DataFrame(dict(
-            r=[100, 95, 90, 88, 92],
-            theta=['Social Preparation', 'Association Profiling', 'GAA Allocation', 'MOA Submission', 'Livelihood Opening']
-        ))
-        fig_radar = px.line_polar(radar_df, r='r', theta='theta', line_close=True, template=plotly_template)
-        fig_radar.update_traces(fill='toself', fillcolor='rgba(22, 163, 74, 0.25)', line_color='#16A34A')
-        fig_radar.update_layout(margin=dict(t=20, b=20, l=20, r=20))
-        st.plotly_chart(fig_radar, use_container_width=True)
+        st.subheader("🔗 Official Google Sheets Database Links")
+        st.markdown("""
+        <div class="link-box">
+            📌 <b>ANNEX B-2025 TARGETS DATABASE:</b><br>
+            <a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vQYGYWL-VChGZaSgYHxI8E_w0zP3WGfTD8-Cu-OFwF3dAvUfx8Eo4TIlr0MuUAqw5pRcyieSbKhucpj/pubhtml" target="_blank">📄 View Official 2025 Targets Sheet</a>
+            <br><br>
+            👥 <b>PAMANA LGU-LED 2025 ASSOCIATION / MEMBERS LIST:</b><br>
+            <a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vSFs-KXI7pYTCoBqIvyiTnVq70f-4U2tBUTHA1NrQcqdNo3EIS50W_s1Sncsx1VHiafvYvWMNs0Qnra/pubhtml" target="_blank">📄 View Members & Associations Database (Mis. Occ, Lanao del Norte, Mis. Or, Bukidnon)</a>
+        </div>
+        """, unsafe_allow_html=True)
 
     st.markdown("---")
 
@@ -541,7 +539,23 @@ elif program_view == "🏛️ 2. PAMANA LGU-Led Analytics":
     st.markdown('<div class="glow-header-title">🏛️ 2. PAMANA LGU-Led Analytics</div>', unsafe_allow_html=True)
     st.markdown('<div class="privacy-banner">🔒 <b>Data Privacy Standard Active:</b> Project monitoring and financial scorecards rendered below for Region X scope.</div>', unsafe_allow_html=True)
 
-    st.subheader("📋 LGU Program Aggregated Scorecard")
+    st.subheader("📋 PAMANA LGU-LED 2025 Program Overview")
+    
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric("TARGET", "99 POs")
+    m2.metric("PROVIDED WITH LIVELIHOOD ASSISTANCE", "97 POs", delta="↑ 98% Accomplished")
+    m3.metric("WAIVED / DISBANDED POs", "2 POs", delta="Disbanded / Waived", delta_color="inverse")
+    m4.metric("PENDING FUND APPROVAL", "₱600,000", delta="OPAPRU Peace Table")
+
+    st.markdown("---")
+    st.subheader("🔗 Official Google Sheets Live Database Links")
+    st.markdown("""
+    * 📄 **ANNEX B-2025 TARGETS DATABASE:** [Click to open ANNEX B Google Sheet](https://docs.google.com/spreadsheets/d/e/2PACX-1vQYGYWL-VChGZaSgYHxI8E_w0zP3WGfTD8-Cu-OFwF3dAvUfx8Eo4TIlr0MuUAqw5pRcyieSbKhucpj/pubhtml)
+    * 👥 **ASSOCIATION / MEMBERS LIST:** [Click to open Members Database Sheet](https://docs.google.com/spreadsheets/d/e/2PACX-1vSFs-KXI7pYTCoBqIvyiTnVq70f-4U2tBUTHA1NrQcqdNo3EIS50W_s1Sncsx1VHiafvYvWMNs0Qnra/pubhtml) *(Tabs: Mis. Occ, Lanao del Norte, Mis. Or, Bukidnon)*
+    """)
+
+    st.markdown("---")
+    st.subheader("📊 PAMANA LGU-Led Aggregated Scorecard")
     st.dataframe(df_lgu_summary, use_container_width=True, hide_index=True)
 
 else:
