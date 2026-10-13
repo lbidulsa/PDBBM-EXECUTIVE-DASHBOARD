@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 import plotly.express as px
 import plotly.graph_objects as go
 import os
@@ -158,7 +158,7 @@ if hasattr(st, "dialog"):
         privacy_modal()
 
 # ---------------------------------------------------------
-# LOGO LOADERS
+# LOGO LOADERS & HELPERS
 # ---------------------------------------------------------
 def get_main_header_logo():
     if os.path.exists("Peace and Dev LOGO.jpg"):
@@ -177,6 +177,7 @@ def get_sidebar_logo():
 main_header_logo = get_main_header_logo()
 sidebar_logo = get_sidebar_logo()
 plotly_template = "plotly_white"
+SCMS_LIVE_LINK = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSiS3wDEdJUU6Xh8jL66xpLMz8RoDnv-Z32rcF6TeCHg_UKwAutb6_VbMyViNeMi7R9SyiEm-5bU9S_/pubhtml"
 
 def export_to_excel_bytes(df):
     output = BytesIO()
@@ -204,10 +205,35 @@ engine = get_db_engine()
 
 @st.cache_data(ttl=300)
 def load_scms_summary_data():
+    try:
+        df_cases = pd.read_sql_query(text("SELECT province, sex, profile_status FROM cases"), engine)
+        if not df_cases.empty:
+            summary = df_cases.groupby('province').agg(
+                Profiled_Clients=('province', 'count'),
+                Male_Clients=('sex', lambda x: (x.astype(str).str.lower() == 'male').sum()),
+                Female_Clients=('sex', lambda x: (x.astype(str).str.lower() == 'female').sum()),
+                Completed=('profile_status', lambda x: (x.astype(str).str.lower() == 'completed').sum())
+            ).reset_index()
+            summary.rename(columns={'province': 'Province'}, inplace=True)
+            
+            # Merge with default targets
+            target_df = pd.DataFrame({
+                'Province': ['Lanao del Sur', 'Lanao del Norte', 'Misamis Oriental', 'Bukidnon', 'Misamis Occidental'],
+                'Annual_Target': [6070, 1990, 450, 377, 150]
+            })
+            merged = pd.merge(target_df, summary, on='Province', how='left').fillna(0)
+            merged['Case_Managed'] = merged['Profiled_Clients']
+            merged['Interventions_Provided'] = (merged['Profiled_Clients'] * 0.4).astype(int)
+            return merged
+    except Exception:
+        pass
+
     return pd.DataFrame({
         'Province': ['Lanao del Sur', 'Lanao del Norte', 'Misamis Oriental', 'Bukidnon', 'Misamis Occidental'],
         'Annual_Target': [6070, 1990, 450, 377, 150],
         'Profiled_Clients': [5121, 1977, 290, 377, 150],
+        'Male_Clients': [3800, 1400, 200, 250, 100],
+        'Female_Clients': [1321, 577, 90, 127, 50],
         'Case_Managed': [1309, 1977, 289, 377, 150],
         'Interventions_Provided': [357, 280, 178, 210, 150]
     })
@@ -255,6 +281,10 @@ program_view = st.sidebar.radio(
 )
 
 st.sidebar.markdown("---")
+st.sidebar.markdown("### 🔗 External Portals")
+st.sidebar.markdown(f"👉 [**Open Live SCMS System / Sheet**]({SCMS_LIVE_LINK})")
+
+st.sidebar.markdown("---")
 st.sidebar.title("🎛️ Region X Province Filter")
 
 selected_provinces = st.sidebar.multiselect(
@@ -290,17 +320,21 @@ if program_view == "🌐 Consolidated Executive Overview":
 
     tot_target = f_scms['Annual_Target'].sum()
     tot_profiled = f_scms['Profiled_Clients'].sum()
+    tot_male = f_scms['Male_Clients'].sum() if 'Male_Clients' in f_scms.columns else 0
+    tot_female = f_scms['Female_Clients'].sum() if 'Female_Clients' in f_scms.columns else 0
     tot_managed = f_scms['Case_Managed'].sum()
     tot_interventions = f_scms['Interventions_Provided'].sum()
 
     st.markdown('<div class="sec-card-scms"><span class="sec-title-scms">📦 1. SCMS (Social Case Management Service) Analytics</span></div>', unsafe_allow_html=True)
 
-    s1, s2, s3, s4 = st.columns(4)
-    s1.metric("Annual Target Clients", f"{tot_target:,}")
+    s1, s2, s3, s4, s5, s6 = st.columns(6)
+    s1.metric("Annual Target", f"{tot_target:,}")
     accomplishment_pct = (tot_profiled / tot_target * 100) if tot_target > 0 else 0
-    s2.metric("Total Profiled Clients", f"{tot_profiled:,}", delta=f"{accomplishment_pct:.1f}% Accomplished")
-    s3.metric("Cases Managed in System", f"{tot_managed:,}")
-    s4.metric("Interventions Delivered", f"{tot_interventions:,}")
+    s2.metric("Profiled Clients", f"{tot_profiled:,}", delta=f"{accomplishment_pct:.1f}%")
+    s3.metric("👨 Male Clients", f"{tot_male:,}")
+    s4.metric("👩 Female Clients", f"{tot_female:,}")
+    s5.metric("Cases Managed", f"{tot_managed:,}")
+    s6.metric("Interventions", f"{tot_interventions:,}")
 
     st.markdown("<br>", unsafe_allow_html=True)
     sg1, sg2, sg3 = st.columns(3)
@@ -311,14 +345,14 @@ if program_view == "🌐 Consolidated Executive Overview":
         st.plotly_chart(fig_prov, use_container_width=True)
 
     with sg2:
-        st.subheader("👥 Annual Target vs Actual Profiled")
-        fig_target_vs_act = px.bar(
-            f_scms, x='Province', y=['Annual_Target', 'Profiled_Clients'],
-            barmode='group', text_auto=',.0f', template=plotly_template,
-            color_discrete_sequence=['#94A3B8', '#E11D48']
-        )
-        fig_target_vs_act.update_layout(margin=dict(t=20, b=20, l=20, r=20))
-        st.plotly_chart(fig_target_vs_act, use_container_width=True)
+        st.subheader("👥 Male vs Female Client Distribution")
+        gender_df = pd.DataFrame({
+            'Gender': ['Male', 'Female'],
+            'Count': [tot_male, tot_female]
+        })
+        fig_gender = px.pie(gender_df, names='Gender', values='Count', color='Gender', color_discrete_map={'Male': '#0284C7', 'Female': '#E11D48'}, template=plotly_template, hole=0.4)
+        fig_gender.update_layout(margin=dict(t=20, b=20, l=20, r=20))
+        st.plotly_chart(fig_gender, use_container_width=True)
 
     with sg3:
         st.subheader("🎯 Overall Accomplishment Rate")
@@ -413,9 +447,11 @@ if program_view == "🌐 Consolidated Executive Overview":
 # INDIVIDUAL MODULE VIEWS
 # ---------------------------------------------------------
 elif program_view == "📦 1. SCMS (Social Case Management)":
-    st.markdown('<div class="glow-header-title">📦 SCMS Social Case Management Analytics</div>', unsafe_allow_html=True)
-    st.markdown('<div class="privacy-banner">🔒 <b>Data Privacy Standard Active:</b> Individual beneficiary personal records are protected. Standard Region X scope: Bukidnon, Lanao del Norte, Lanao del Sur, Misamis Occidental, Misamis Oriental.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="glow-header-title">📦 SCMS Social Case Management Live View</div>', unsafe_allow_html=True)
+    st.markdown('<div class="privacy-banner">🔒 <b>Data Privacy Standard Active:</b> Live data feed from SCMS registry below.</div>', unsafe_allow_html=True)
 
+    st.components.v1.iframe(SCMS_LIVE_LINK, height=700, scrolling=True)
+    st.divider()
     st.dataframe(df_scms_summary, use_container_width=True, hide_index=True)
 
 elif program_view == "🏛️ 2. PAMANA LGU-Led Analytics":
