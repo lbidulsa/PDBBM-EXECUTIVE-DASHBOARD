@@ -208,7 +208,7 @@ df_scms_province = pd.DataFrame({
 })
 
 # ---------------------------------------------------------
-# COMPLETE DATA STRUCTURE FOR TAB 2: SCMS TARGET PER P-M (ALL 5 PROVINCES)
+# COMPLETE DATA STRUCTURE FOR TAB 2: SCMS TARGET PER P-M (INCLUDING ZAMBOANGA PROVINCES)
 # ---------------------------------------------------------
 df_scms_target_pm = pd.DataFrame({
     'Province': [
@@ -220,14 +220,21 @@ df_scms_target_pm = pd.DataFrame({
         # BUKIDNON
         'BUKIDNON', 'BUKIDNON', 'BUKIDNON', 'BUKIDNON', 'BUKIDNON', 
         'BUKIDNON', 'BUKIDNON', 'BUKIDNON', 'BUKIDNON', 'BUKIDNON', 
-        'BUKIDNON', 'BUKIDNON', 'BUKIDNON', 'BUKIDNON',
+        'BUKIDNON', 'BUKIDNON', 'BUKIDNON', 'BUKIDNON', 'BUKIDNON', 'BUKIDNON', 'BUKIDNON',
+        # MISAMIS OCCIDENTAL
+        'MISAMIS OCCIDENTAL', 'MISAMIS OCCIDENTAL', 'MISAMIS OCCIDENTAL', 'MISAMIS OCCIDENTAL', 
+        'MISAMIS OCCIDENTAL', 'MISAMIS OCCIDENTAL', 'MISAMIS OCCIDENTAL', 'MISAMIS OCCIDENTAL', 
+        'MISAMIS OCCIDENTAL', 'MISAMIS OCCIDENTAL', 'MISAMIS OCCIDENTAL', 'MISAMIS OCCIDENTAL', 
+        'MISAMIS OCCIDENTAL', 'MISAMIS OCCIDENTAL',
+        # ZAMBOANGA DEL SUR
+        'ZAMBOANGA DEL SUR', 'ZAMBOANGA DEL SUR', 'ZAMBOANGA DEL SUR',
+        # ZAMBOANGA DEL NORTE
+        'ZAMBOANGA DEL NORTE', 'ZAMBOANGA DEL NORTE',
         # LANAO DEL NORTE
         'LANAO DEL NORTE', 'LANAO DEL NORTE', 'LANAO DEL NORTE', 'LANAO DEL NORTE', 
-        'LANAO DEL NORTE', 'LANAO DEL NORTE',
+        'LANAO DEL NORTE', 'LANAO DEL NORTE', 'LANAO DEL NORTE',
         # LANAO DEL SUR
-        'LANAO DEL SUR', 'LANAO DEL SUR', 'LANAO DEL SUR',
-        # MISAMIS OCCIDENTAL
-        'MISAMIS OCCIDENTAL', 'MISAMIS OCCIDENTAL'
+        'LANAO DEL SUR', 'LANAO DEL SUR', 'LANAO DEL SUR'
     ],
     'Municipality': [
         # MISAMIS ORIENTAL
@@ -237,13 +244,19 @@ df_scms_target_pm = pd.DataFrame({
         # BUKIDNON
         'NO ADDRESS', 'Kadingilan', 'Kadingilan', 'Kalilangan', 'Kalilangan', 
         'San Fernando', 'Valencia City', 'Valencia City', 'Sumilao', 'Baungon', 
-        'Cabanglasan', 'Maramag', 'Maramag', 'Kitaotao',
-        # LANAO DEL NORTE
-        'Balo-i', 'Kauswagan', 'Munai', 'Pantar', 'Tagoloan', 'Tangcal',
-        # LANAO DEL SUR
-        'Marawi City', 'Sultan Dumalondong', 'Tagoloan II',
+        'Cabanglasan', 'Maramag', 'Maramag', 'Kitaotao', 'Quezon', 'Quezon', 'Damulog',
         # MISAMIS OCCIDENTAL
-        'Don Victoriano Chiongbian', 'Oquieta City'
+        'Don Victoriano', 'Tangub City', 'Ozamis City', 'Ozamis City', 'Clarin', 
+        'Tudela', 'Sinacaban', 'Jimenez', 'Panaon', 'Oroquieta City', 'Plaridel', 
+        'Calamba', 'Concepcion', 'Lopez Jaena',
+        # ZAMBOANGA DEL SUR
+        'Molave', 'Josefina', 'Dumingag',
+        # ZAMBOANGA DEL NORTE
+        'Mutia', 'Sergio Osmeña',
+        # LANAO DEL NORTE
+        'Bacalod', 'Baloi', 'Iligan City', 'Kapatagan', 'Kauswagan', 'Kolambugan', 'Lala',
+        # LANAO DEL SUR
+        'Marawi City', 'Sultan Dumalondong', 'Tagoloan II'
     ],
     'Affiliation': [
         # MISAMIS ORIENTAL
@@ -253,37 +266,51 @@ df_scms_target_pm = pd.DataFrame({
         # BUKIDNON
         'CPP-NPA', 'CPP-NPA', 'MILF', 'CPP-NPA', 'MILF', 
         'CPP-NPA', 'CPP-NPA', 'MILF', 'CPP-NPA', 'CPP-NPA', 
-        'CPP-NPA', 'CPP-NPA', 'KAPATIRAN', 'CPP-NPA',
-        # LANAO DEL NORTE
-        'MILF', 'MILF', 'MILF', 'MILF', 'MILF', 'MILF',
-        # LANAO DEL SUR
-        'MILF', 'MNLF', 'MILF',
+        'CPP-NPA', 'CPP-NPA', 'KAPATIRAN', 'CPP-NPA', 'CPP-NPA', 'KAPATIRAN', 'CPP-NPA',
         # MISAMIS OCCIDENTAL
-        'CPP-NPA', 'MILF'
+        'CPP-NPA', 'CPP-NPA', 'CPP-NPA', 'MILF', 'CPP-NPA', 
+        'CPP-NPA', 'CPP-NPA', 'CPP-NPA', 'CPP-NPA', 'CPP-NPA', 
+        'CPP-NPA', 'CPP-NPA', 'CPP-NPA', 'CPP-NPA',
+        # ZAMBOANGA DEL SUR
+        'CPP-NPA', 'CPP-NPA', 'CPP-NPA',
+        # ZAMBOANGA DEL NORTE
+        'CPP-NPA', 'CPP-NPA',
+        # LANAO DEL NORTE
+        'MILF', 'MILF', 'MILF', 'MILF', 'MILF', 'MILF', 'MILF',
+        # LANAO DEL SUR
+        'MILF', 'MNLF', 'MILF'
     ],
     'Number of Clients': [
         # MISAMIS ORIENTAL
         2, 35, 85, 39, 9, 115, 5, 2, 1, 2, 140, 7, 32,
         # BUKIDNON
-        87, 1, 2, 2, 16, 438, 178, 3, 37, 2, 327, 16, 8, 119,
-        # LANAO DEL NORTE
-        450, 380, 520, 210, 190, 227,
-        # LANAO DEL SUR
-        3500, 577, 1993,
+        87, 1, 2, 2, 16, 438, 178, 3, 37, 2, 327, 16, 8, 119, 236, 2, 20,
         # MISAMIS OCCIDENTAL
-        150, 2
+        20, 3, 6, 2, 10, 22, 5, 5, 1, 25, 11, 16, 6, 2,
+        # ZAMBOANGA DEL SUR
+        6, 3, 1,
+        # ZAMBOANGA DEL NORTE
+        2, 2,
+        # LANAO DEL NORTE
+        50, 195, 57, 11, 48, 26, 4,
+        # LANAO DEL SUR
+        3500, 577, 1993
     ],
     'Total Target Per Province': [
         # MISAMIS ORIENTAL
         474, 474, 474, 474, 474, 474, 474, 474, 474, 474, 474, 474, 474,
         # BUKIDNON
-        2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488,
+        2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488,
+        # MISAMIS OCCIDENTAL (Includes nearby profiled areas under same count)
+        152, 152, 152, 152, 152, 152, 152, 152, 152, 152, 152, 152, 152, 152,
+        # ZAMBOANGA DEL SUR
+        10, 10, 10,
+        # ZAMBOANGA DEL NORTE
+        4, 4,
         # LANAO DEL NORTE
-        1977, 1977, 1977, 1977, 1977, 1977,
+        1977, 1977, 1977, 1977, 1977, 1977, 1977,
         # LANAO DEL SUR
-        6070, 6070, 6070,
-        # MISAMIS OCCIDENTAL
-        152, 152
+        6070, 6070, 6070
     ]
 })
 
@@ -329,12 +356,12 @@ program_view = st.sidebar.radio(
 )
 
 st.sidebar.markdown("---")
-st.sidebar.title("🎛️ Region X Province Filter")
+st.sidebar.title("🎛️ Province Filter")
 
 selected_provinces = st.sidebar.multiselect(
-    "Select Region X Provinces:",
-    options=['Bukidnon', 'Lanao del Norte', 'Lanao del Sur', 'Misamis Occidental', 'Misamis Oriental'],
-    default=['Bukidnon', 'Lanao del Norte', 'Lanao del Sur', 'Misamis Occidental', 'Misamis Oriental']
+    "Select Provinces:",
+    options=['Bukidnon', 'Lanao del Norte', 'Lanao del Sur', 'Misamis Occidental', 'Misamis Oriental', 'Zamboanga del Sur', 'Zamboanga del Norte'],
+    default=['Bukidnon', 'Lanao del Norte', 'Lanao del Sur', 'Misamis Occidental', 'Misamis Oriental', 'Zamboanga del Sur', 'Zamboanga del Norte']
 )
 
 st.sidebar.markdown("---")
@@ -381,7 +408,7 @@ if program_view == "🌐 Consolidated Executive Overview":
     st.markdown("<br>", unsafe_allow_html=True)
     sg1, sg2, sg3 = st.columns(3)
     with sg1:
-        st.subheader("📊 Profiled Clients per Province (Region X)")
+        st.subheader("📊 Profiled Clients per Province")
         fig_prov = px.bar(filtered_prov, x='Province', y='Profiled_Clients', color='Province', text_auto=',.0f', template=plotly_template)
         fig_prov.update_layout(margin=dict(t=20, b=20, l=20, r=20), showlegend=False)
         st.plotly_chart(fig_prov, use_container_width=True)
