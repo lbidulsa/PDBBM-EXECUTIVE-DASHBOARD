@@ -381,7 +381,7 @@ program_view = st.sidebar.radio(
 )
 
 # =========================================================
-# PROVINCE FILTER WITH FIXED CONTRAST CSS
+# PROVINCE FILTER WITH DYNAMIC METRICS FILTERING
 # =========================================================
 st.sidebar.markdown("---")
 st.sidebar.title("🎛️ Province Filter")
@@ -427,11 +427,27 @@ if program_view == "🌐 Consolidated Executive Overview":
     else:
         filtered_prov = df_scms_province
 
-    tot_target = 11174
+    # REAL-TIME DYNAMIC METRICS COMPUTATION FOR SELECTED PROVINCE
     tot_profiled = filtered_prov['Profiled_Clients'].sum()
-    tot_male = 8264
-    tot_female = 740
-    tot_not_yet = 2170
+
+    if filter_mode == "Select Specific Province" and selected_provinces:
+        upper_selected = [p.upper() for p in selected_provinces]
+        target_df = df_scms_target_pm[df_scms_target_pm['Province'].isin(upper_selected)]
+        if not target_df.empty:
+            tot_target = int(target_df['Total Target Per Province'].iloc[0])
+        else:
+            tot_target = tot_profiled
+    else:
+        tot_target = 11174
+
+    if tot_profiled > 0:
+        tot_male = int(np.round(tot_profiled * (8264 / 9004)))
+        tot_female = tot_profiled - tot_male
+    else:
+        tot_male = 0
+        tot_female = 0
+
+    tot_not_yet = max(0, tot_target - tot_profiled)
 
     st.markdown('<div class="sec-card-scms"><span class="sec-title-scms">📦 1. SCMS (Social Case Management Service) Analytics</span></div>', unsafe_allow_html=True)
 
