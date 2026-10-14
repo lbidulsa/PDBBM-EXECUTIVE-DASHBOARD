@@ -16,7 +16,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom Styling (With Selectbox Dropdown Fix)
+# Custom Styling (Fixed Selectbox White Text Contrast)
 st.markdown("""
     <style>
     .stApp {
@@ -96,18 +96,35 @@ st.markdown("""
         background-color: #0F172A !important;
         color: #FFFFFF !important;
     }
-    section[data-testid="stSidebar"] * {
+    section[data-testid="stSidebar"] label,
+    section[data-testid="stSidebar"] h1,
+    section[data-testid="stSidebar"] h2,
+    section[data-testid="stSidebar"] h3,
+    section[data-testid="stSidebar"] p,
+    section[data-testid="stSidebar"] span {
         color: #F8FAFC !important;
     }
     
-    /* FIX SELECTBOX INPUT & DROPDOWN MENU TEXT COLOR IN SIDEBAR */
+    /* STRICT CSS OVERRIDE FOR SELECTBOX IN SIDEBAR */
+    div[data-testid="stSelectbox"] div[role="combobox"] {
+        background-color: #FFFFFF !important;
+        border: 2px solid #0284C7 !important;
+        border-radius: 10px !important;
+    }
+    div[data-testid="stSelectbox"] div[role="combobox"] * {
+        color: #0F172A !important;
+        fill: #0F172A !important;
+        font-weight: 700 !important;
+    }
     div[data-baseweb="select"] * {
         color: #0F172A !important;
         background-color: #FFFFFF !important;
+        font-weight: 700 !important;
     }
     div[data-baseweb="menu"] * {
         color: #0F172A !important;
         background-color: #FFFFFF !important;
+        font-weight: 600 !important;
     }
     
     .sidebar-logo-container {
@@ -364,7 +381,7 @@ program_view = st.sidebar.radio(
 )
 
 # =========================================================
-# PROVINCE FILTER WITH FIXED SELECTBOX COLOR
+# PROVINCE FILTER WITH FIXED CONTRAST CSS
 # =========================================================
 st.sidebar.markdown("---")
 st.sidebar.title("🎛️ Province Filter")
