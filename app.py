@@ -16,7 +16,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom Styling
+# Custom Styling (With Selectbox Dropdown Fix)
 st.markdown("""
     <style>
     .stApp {
@@ -98,6 +98,16 @@ st.markdown("""
     }
     section[data-testid="stSidebar"] * {
         color: #F8FAFC !important;
+    }
+    
+    /* FIX SELECTBOX INPUT & DROPDOWN MENU TEXT COLOR IN SIDEBAR */
+    div[data-baseweb="select"] * {
+        color: #0F172A !important;
+        background-color: #FFFFFF !important;
+    }
+    div[data-baseweb="menu"] * {
+        color: #0F172A !important;
+        background-color: #FFFFFF !important;
     }
     
     .sidebar-logo-container {
@@ -354,7 +364,7 @@ program_view = st.sidebar.radio(
 )
 
 # =========================================================
-# OPTION 1: CLEAN RADIO + SINGLE SELECT DROPDOWN FILTER
+# PROVINCE FILTER WITH FIXED SELECTBOX COLOR
 # =========================================================
 st.sidebar.markdown("---")
 st.sidebar.title("🎛️ Province Filter")
