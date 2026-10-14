@@ -353,14 +353,27 @@ program_view = st.sidebar.radio(
     ]
 )
 
+# =========================================================
+# OPTION 1: CLEAN RADIO + SINGLE SELECT DROPDOWN FILTER
+# =========================================================
 st.sidebar.markdown("---")
 st.sidebar.title("🎛️ Province Filter")
 
-selected_provinces = st.sidebar.multiselect(
-    "Select Provinces:",
-    options=['Bukidnon', 'Lanao del Norte', 'Lanao del Sur', 'Misamis Occidental', 'Misamis Oriental', 'Zamboanga del Sur', 'Zamboanga del Norte'],
-    default=['Bukidnon', 'Lanao del Norte', 'Lanao del Sur', 'Misamis Occidental', 'Misamis Oriental', 'Zamboanga del Sur', 'Zamboanga del Norte']
+all_provinces_list = ['Bukidnon', 'Lanao del Norte', 'Lanao del Sur', 'Misamis Occidental', 'Misamis Oriental', 'Zamboanga del Sur', 'Zamboanga del Norte']
+
+filter_mode = st.sidebar.radio(
+    "Filter Scope:",
+    ["All Provinces (Region X)", "Select Specific Province"]
 )
+
+if filter_mode == "Select Specific Province":
+    selected_province = st.sidebar.selectbox(
+        "Choose Target Province:",
+        options=all_provinces_list
+    )
+    selected_provinces = [selected_province]
+else:
+    selected_provinces = all_provinces_list
 
 st.sidebar.markdown("---")
 st.sidebar.info("🔒 **Data Privacy Active (RA 10173):** All individual beneficiary personal identity details are protected. Analytics display aggregate counts and statistical metrics only.")
