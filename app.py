@@ -16,7 +16,9 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom Styling (Fixed Selectbox White Text Contrast)
+# ---------------------------------------------------------
+# CUSTOM GLOW ANIMATIONS & STYLING INJECTION
+# ---------------------------------------------------------
 st.markdown("""
     <style>
     .stApp {
@@ -40,18 +42,22 @@ st.markdown("""
         margin-bottom: 20px;
         text-align: center !important;
     }
+    
+    /* ========================================================= */
+    /* 🌟 METRIC CARDS GLOW & HOVER ANIMATION (LOGOUT STYLE) 🌟 */
+    /* ========================================================= */
     div[data-testid="stMetric"] {
         background: #FFFFFF !important;
-        border: 1px solid #E2E8F0 !important;
+        border: 1px solid #CBD5E1 !important;
         border-radius: 14px !important;
         padding: 16px !important;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03) !important;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
     }
     div[data-testid="stMetric"]:hover {
-        transform: translateY(-4px);
-        border-color: #0284C7 !important;
-        box-shadow: 0 0 20px rgba(2, 132, 199, 0.25) !important;
+        transform: translateY(-4px) scale(1.02) !important;
+        border-color: #E11D48 !important;
+        box-shadow: 0 0 18px rgba(225, 29, 72, 0.5), 0 0 28px rgba(225, 29, 72, 0.25) !important;
     }
     div[data-testid="stMetric"] label {
         color: #475569 !important;
@@ -64,34 +70,76 @@ st.markdown("""
         font-weight: 800 !important;
         font-size: 24px !important;
     }
-    .sec-card-scms {
+
+    /* ========================================================= */
+    /* 🌟 UNIFIED BUTTON ANIMATIONS & RED/ORANGE GLOW EFFECTS 🌟 */
+    /* ========================================================= */
+    div.stButton > button, 
+    div.stDownloadButton > button,
+    div.stFormSubmitButton > button,
+    .stSidebar div.stButton > button {
+        background-color: #E2E8F0 !important;
+        color: #0F172A !important;
+        font-weight: bold !important;
+        border-radius: 8px !important;
+        border: 1px solid #CBD5E1 !important;
+        padding: 8px 20px !important;
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05) !important;
+    }
+    
+    /* HOVER STATE - MOSIGA ANG RED GLOW (RED OUTLINE & TEXT) */
+    div.stButton > button:hover, 
+    div.stDownloadButton > button:hover,
+    div.stFormSubmitButton > button:hover,
+    .stSidebar div.stButton > button:hover {
+        background-color: #FFFFFF !important;
+        color: #E11D48 !important;
+        border-color: #E11D48 !important;
+        box-shadow: 0 0 15px rgba(225, 29, 72, 0.6), 0 0 25px rgba(225, 29, 72, 0.3) !important;
+        transform: translateY(-2px) scale(1.01) !important;
+    }
+    
+    /* ACTIVE/CLICK STATE */
+    div.stButton > button:active, 
+    div.stDownloadButton > button:active,
+    div.stFormSubmitButton > button:active,
+    .stSidebar div.stButton > button:active {
+        transform: translateY(1px) scale(0.99) !important;
+        box-shadow: 0 0 5px rgba(225, 29, 72, 0.4) !important;
+    }
+
+    /* SECTION CARDS HOVER EFFECT */
+    .sec-card-scms, .sec-card-lgu, .sec-card-cdpd {
         background: #FFFFFF;
         padding: 16px;
         border-radius: 12px;
-        border-left: 6px solid #E11D48;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
         margin-bottom: 18px;
+        transition: all 0.3s ease;
     }
-    .sec-card-lgu {
-        background: #FFFFFF;
-        padding: 16px;
-        border-radius: 12px;
-        border-left: 6px solid #16A34A;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-        margin-bottom: 18px;
+    .sec-card-scms { border-left: 6px solid #E11D48; }
+    .sec-card-lgu { border-left: 6px solid #16A34A; }
+    .sec-card-cdpd { border-left: 6px solid #0284C7; }
+
+    .sec-card-scms:hover {
+        transform: translateX(4px);
+        box-shadow: 0 0 15px rgba(225, 29, 72, 0.25);
     }
-    .sec-card-cdpd {
-        background: #FFFFFF;
-        padding: 16px;
-        border-radius: 12px;
-        border-left: 6px solid #0284C7;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-        margin-bottom: 18px;
+    .sec-card-lgu:hover {
+        transform: translateX(4px);
+        box-shadow: 0 0 15px rgba(22, 163, 74, 0.25);
     }
+    .sec-card-cdpd:hover {
+        transform: translateX(4px);
+        box-shadow: 0 0 15px rgba(2, 132, 199, 0.25);
+    }
+
     .sec-title-scms { color: #E11D48; font-size: 20px; font-weight: 800; }
     .sec-title-lgu { color: #16A34A; font-size: 20px; font-weight: 800; }
     .sec-title-cdpd { color: #0284C7; font-size: 20px; font-weight: 800; }
     
+    /* SIDEBAR STYLING */
     section[data-testid="stSidebar"] {
         background-color: #0F172A !important;
         color: #FFFFFF !important;
