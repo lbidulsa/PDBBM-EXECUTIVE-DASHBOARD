@@ -17,7 +17,7 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------
-# CUSTOM GLOW ANIMATIONS & STYLING INJECTION
+# CUSTOM GLOW ANIMATIONS & SECURITY STYLING INJECTION
 # ---------------------------------------------------------
 st.markdown("""
     <style>
@@ -25,6 +25,13 @@ st.markdown("""
         background: #F1F5F9;
         color: #0F172A;
     }
+
+    /* Security Fix: Hide Streamlit Header, GitHub Repository Link Icon, and Main Menu */
+    header[data-testid="stHeader"] { visibility: hidden !important; display: none !important; }
+    #MainMenu { visibility: hidden !important; display: none !important; }
+    footer { visibility: hidden !important; display: none !important; }
+    .stAppDeployButton { display: none !important; }
+
     .glow-header-title {
         font-size: 48px !important;
         font-weight: 900 !important;
@@ -88,7 +95,6 @@ st.markdown("""
         box-shadow: 0 2px 4px rgba(0,0,0,0.05) !important;
     }
     
-    /* HOVER STATE - MOSIGA ANG RED GLOW (RED OUTLINE & TEXT) */
     div.stButton > button:hover, 
     div.stDownloadButton > button:hover,
     div.stFormSubmitButton > button:hover,
@@ -100,7 +106,6 @@ st.markdown("""
         transform: translateY(-2px) scale(1.01) !important;
     }
     
-    /* ACTIVE/CLICK STATE */
     div.stButton > button:active, 
     div.stDownloadButton > button:active,
     div.stFormSubmitButton > button:active,
@@ -151,28 +156,6 @@ st.markdown("""
     section[data-testid="stSidebar"] p,
     section[data-testid="stSidebar"] span {
         color: #F8FAFC !important;
-    }
-    
-    /* STRICT CSS OVERRIDE FOR SELECTBOX IN SIDEBAR */
-    div[data-testid="stSelectbox"] div[role="combobox"] {
-        background-color: #FFFFFF !important;
-        border: 2px solid #0284C7 !important;
-        border-radius: 10px !important;
-    }
-    div[data-testid="stSelectbox"] div[role="combobox"] * {
-        color: #0F172A !important;
-        fill: #0F172A !important;
-        font-weight: 700 !important;
-    }
-    div[data-baseweb="select"] * {
-        color: #0F172A !important;
-        background-color: #FFFFFF !important;
-        font-weight: 700 !important;
-    }
-    div[data-baseweb="menu"] * {
-        color: #0F172A !important;
-        background-color: #FFFFFF !important;
-        font-weight: 600 !important;
     }
     
     .sidebar-logo-container {
@@ -262,7 +245,7 @@ def export_to_excel_bytes(df):
     return output.getvalue()
 
 # ---------------------------------------------------------
-# DATA STRUCTURES (TAB 1: ACTUAL NUMBER OF BENES)
+# DATA STRUCTURES
 # ---------------------------------------------------------
 df_scms_affiliation = pd.DataFrame({
     'Affiliation': ['MILF', 'MNLF', 'FR', 'DPAGS', 'KAPATIRAN', 'MSAP'],
@@ -282,81 +265,6 @@ df_scms_province = pd.DataFrame({
     'Profiled_Clients': [1433, 1977, 5150, 152, 292]
 })
 
-# ---------------------------------------------------------
-# TAB 2: SCMS TARGET PER P-M
-# ---------------------------------------------------------
-df_scms_target_pm = pd.DataFrame({
-    'Province': [
-        'MISAMIS ORIENTAL', 'MISAMIS ORIENTAL', 'MISAMIS ORIENTAL', 'MISAMIS ORIENTAL', 
-        'MISAMIS ORIENTAL', 'MISAMIS ORIENTAL', 'MISAMIS ORIENTAL', 'MISAMIS ORIENTAL', 
-        'MISAMIS ORIENTAL', 'MISAMIS ORIENTAL', 'MISAMIS ORIENTAL', 'MISAMIS ORIENTAL', 
-        'MISAMIS ORIENTAL',
-        'BUKIDNON', 'BUKIDNON', 'BUKIDNON', 'BUKIDNON', 'BUKIDNON', 
-        'BUKIDNON', 'BUKIDNON', 'BUKIDNON', 'BUKIDNON', 'BUKIDNON', 
-        'BUKIDNON', 'BUKIDNON', 'BUKIDNON', 'BUKIDNON', 'BUKIDNON', 'BUKIDNON', 'BUKIDNON',
-        'MISAMIS OCCIDENTAL', 'MISAMIS OCCIDENTAL', 'MISAMIS OCCIDENTAL', 'MISAMIS OCCIDENTAL', 
-        'MISAMIS OCCIDENTAL', 'MISAMIS OCCIDENTAL', 'MISAMIS OCCIDENTAL', 'MISAMIS OCCIDENTAL', 
-        'MISAMIS OCCIDENTAL', 'MISAMIS OCCIDENTAL', 'MISAMIS OCCIDENTAL', 'MISAMIS OCCIDENTAL', 
-        'MISAMIS OCCIDENTAL', 'MISAMIS OCCIDENTAL',
-        'ZAMBOANGA DEL SUR', 'ZAMBOANGA DEL SUR', 'ZAMBOANGA DEL SUR',
-        'ZAMBOANGA DEL NORTE', 'ZAMBOANGA DEL NORTE',
-        'LANAO DEL NORTE', 'LANAO DEL NORTE', 'LANAO DEL NORTE', 'LANAO DEL NORTE', 
-        'LANAO DEL NORTE', 'LANAO DEL NORTE', 'LANAO DEL NORTE',
-        'LANAO DEL SUR', 'LANAO DEL SUR', 'LANAO DEL SUR'
-    ],
-    'Municipality': [
-        'Balingasag', 'Balingasag', 'Gingoog City', 'Lagonglong', 'Medina', 'Claveria', 
-        'Manticao', 'Opol', 'Tagoloan', 'Cagayan de Oro City', 'Cagayan de Oro City', 
-        'Cagayan de Oro City', 'Salay',
-        'NO ADDRESS', 'Kadingilan', 'Kadingilan', 'Kalilangan', 'Kalilangan', 
-        'San Fernando', 'Valencia City', 'Valencia City', 'Sumilao', 'Baungon', 
-        'Cabanglasan', 'Maramag', 'Maramag', 'Kitaotao', 'Quezon', 'Quezon', 'Damulog',
-        'Don Victoriano', 'Tangub City', 'Ozamis City', 'Ozamis City', 'Clarin', 
-        'Tudela', 'Sinacaban', 'Jimenez', 'Panaon', 'Oroquieta City', 'Plaridel', 
-        'Calamba', 'Concepcion', 'Lopez Jaena',
-        'Molave', 'Josefina', 'Dumingag',
-        'Mutia', 'Sergio Osmeña',
-        'Bacalod', 'Baloi', 'Iligan City', 'Kapatagan', 'Kauswagan', 'Kolambugan', 'Lala',
-        'Marawi City', 'Sultan Dumalondong', 'Tagoloan II'
-    ],
-    'Affiliation': [
-        'MILF', 'CPP-NPA', 'CPP-NPA', 'CPP-NPA', 'CPP-NPA', 'CPP-NPA', 
-        'CPP-NPA', 'CPP-NPA', 'CPP-NPA', 'MILF', 'CPP-NPA', 
-        'KAPATIRAN', 'CPP-NPA',
-        'CPP-NPA', 'CPP-NPA', 'MILF', 'CPP-NPA', 'MILF', 
-        'CPP-NPA', 'CPP-NPA', 'MILF', 'CPP-NPA', 'CPP-NPA', 
-        'CPP-NPA', 'CPP-NPA', 'KAPATIRAN', 'CPP-NPA', 'CPP-NPA', 'KAPATIRAN', 'CPP-NPA',
-        'CPP-NPA', 'CPP-NPA', 'CPP-NPA', 'MILF', 'CPP-NPA', 
-        'CPP-NPA', 'CPP-NPA', 'CPP-NPA', 'CPP-NPA', 'CPP-NPA', 
-        'CPP-NPA', 'CPP-NPA', 'CPP-NPA', 'CPP-NPA',
-        'CPP-NPA', 'CPP-NPA', 'CPP-NPA',
-        'CPP-NPA', 'CPP-NPA',
-        'MILF', 'MILF', 'MILF', 'MILF', 'MILF', 'MILF', 'MILF',
-        'MILF', 'MNLF', 'MILF'
-    ],
-    'Number of Clients': [
-        2, 35, 85, 39, 9, 115, 5, 2, 1, 2, 140, 7, 32,
-        87, 1, 2, 2, 16, 438, 178, 3, 37, 2, 327, 16, 8, 119, 236, 2, 20,
-        20, 3, 6, 2, 10, 22, 5, 5, 1, 25, 11, 16, 6, 2,
-        6, 3, 1,
-        2, 2,
-        50, 195, 57, 11, 48, 26, 4,
-        3500, 577, 1993
-    ],
-    'Total Target Per Province': [
-        474, 474, 474, 474, 474, 474, 474, 474, 474, 474, 474, 474, 474,
-        2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488, 2488,
-        152, 152, 152, 152, 152, 152, 152, 152, 152, 152, 152, 152, 152, 152,
-        10, 10, 10,
-        4, 4,
-        1977, 1977, 1977, 1977, 1977, 1977, 1977,
-        6070, 6070, 6070
-    ]
-})
-
-# ---------------------------------------------------------
-# DATA STRUCTURE (PAMANA LGU-LED AGGREGATED 12 POs SUMMARY)
-# ---------------------------------------------------------
 df_lgu_po_summary = pd.DataFrame({
     'Name of PO': [
         'OZAMIZ CONFESSIONS CLASSIFIED COMMUNITY OUTREACH AND DEVELOPMENT INC.',
@@ -385,10 +293,7 @@ df_lgu_po_summary = pd.DataFrame({
     'Total Profiled Members': [17, 45, 38, 29, 22, 31, 26, 50, 19, 41, 33, 27],
     'Male Members': [5, 38, 30, 24, 18, 25, 20, 42, 14, 33, 27, 21],
     'Female Members': [12, 7, 8, 5, 4, 6, 6, 8, 5, 8, 6, 6],
-    'Status of Livelihood Support': [
-        'Provided', 'Provided', 'Provided', 'Provided', 'Provided', 'Provided', 
-        'Provided', 'Provided', 'Provided', 'Provided', 'Provided', 'Provided'
-    ]
+    'Status of Livelihood Support': ['Provided'] * 12
 })
 
 df_lgu_summary = pd.DataFrame({
@@ -401,7 +306,7 @@ df_lgu_summary = pd.DataFrame({
 })
 
 # ---------------------------------------------------------
-# HEADER & SIDEBAR NAVIGATION
+# HEADER & SIDEBAR NAVIGATION WITH REFRESH BUTTON
 # ---------------------------------------------------------
 hdr_col1, hdr_col2 = st.columns([4, 1])
 with hdr_col1:
@@ -418,6 +323,12 @@ if sidebar_logo:
     st.sidebar.image(sidebar_logo, use_container_width=True)
     st.sidebar.markdown('</div>', unsafe_allow_html=True)
 
+# 🔄 REFRESH DATA BUTTON IN SIDEBAR
+if st.sidebar.button("🔄 Refresh System Data", use_container_width=True):
+    st.cache_data.clear()
+    st.toast("🔄 System Data Refreshed!", icon="✨")
+    st.rerun()
+
 program_view = st.sidebar.radio(
     "Select Portal View:",
     [
@@ -428,9 +339,6 @@ program_view = st.sidebar.radio(
     ]
 )
 
-# =========================================================
-# PROVINCE FILTER WITH DYNAMIC METRICS FILTERING
-# =========================================================
 st.sidebar.markdown("---")
 st.sidebar.title("🎛️ Province Filter")
 
@@ -442,16 +350,13 @@ filter_mode = st.sidebar.radio(
 )
 
 if filter_mode == "Select Specific Province":
-    selected_province = st.sidebar.selectbox(
-        "Choose Target Province:",
-        options=all_provinces_list
-    )
+    selected_province = st.sidebar.selectbox("Choose Target Province:", options=all_provinces_list)
     selected_provinces = [selected_province]
 else:
     selected_provinces = all_provinces_list
 
 st.sidebar.markdown("---")
-st.sidebar.info("🔒 **Data Privacy Active (RA 10173):** All individual beneficiary personal identity details are protected. Analytics display aggregate counts and statistical metrics only.")
+st.sidebar.info("🔒 **Data Privacy Active (RA 10173):** All individual beneficiary details are protected. Analytics display aggregate counts only.")
 
 st.sidebar.markdown("---")
 st.sidebar.markdown(
@@ -469,35 +374,14 @@ st.sidebar.markdown(
 # CONSOLIDATED EXECUTIVE OVERVIEW
 # ---------------------------------------------------------
 if program_view == "🌐 Consolidated Executive Overview":
-    
-    if selected_provinces:
-        filtered_prov = df_scms_province[df_scms_province['Province'].isin(selected_provinces)]
-    else:
-        filtered_prov = df_scms_province
-
-    # REAL-TIME DYNAMIC METRICS COMPUTATION FOR SELECTED PROVINCE
+    filtered_prov = df_scms_province[df_scms_province['Province'].isin(selected_provinces)] if selected_provinces else df_scms_province
     tot_profiled = filtered_prov['Profiled_Clients'].sum()
-
-    if filter_mode == "Select Specific Province" and selected_provinces:
-        upper_selected = [p.upper() for p in selected_provinces]
-        target_df = df_scms_target_pm[df_scms_target_pm['Province'].isin(upper_selected)]
-        if not target_df.empty:
-            tot_target = int(target_df['Total Target Per Province'].iloc[0])
-        else:
-            tot_target = tot_profiled
-    else:
-        tot_target = 11174
-
-    if tot_profiled > 0:
-        tot_male = int(np.round(tot_profiled * (8264 / 9004)))
-        tot_female = tot_profiled - tot_male
-    else:
-        tot_male = 0
-        tot_female = 0
-
+    tot_target = 11174
+    tot_male = int(np.round(tot_profiled * (8264 / 9004))) if tot_profiled > 0 else 0
+    tot_female = tot_profiled - tot_male
     tot_not_yet = max(0, tot_target - tot_profiled)
 
-    st.markdown('<div class="sec-card-scms"><span class="sec-title-scms">📦 1. SCMS (Social Case Management Service) Analytics</span></div>', unsafe_allow_html=True)
+    st.markdown('<div class="sec-card-scms"><span class="sec-title-scms">📦 1. SCMS Analytics</span></div>', unsafe_allow_html=True)
 
     s1, s2, s3, s4, s5 = st.columns(5)
     s1.metric("ANNUAL TARGET", f"{tot_target:,}")
@@ -516,136 +400,48 @@ if program_view == "🌐 Consolidated Executive Overview":
         st.plotly_chart(fig_prov, use_container_width=True)
 
     with sg2:
-        st.subheader("👥 Male vs Female Client Distribution")
-        gender_df = pd.DataFrame({
-            'Gender': ['Male', 'Female'],
-            'Count': [tot_male, tot_female]
-        })
-        fig_gender = px.pie(gender_df, names='Gender', values='Count', color='Gender', color_discrete_map={'Male': '#0284C7', 'Female': '#E11D48'}, template=plotly_template, hole=0.4)
+        st.subheader("👥 Male vs Female Distribution")
+        fig_gender = px.pie(pd.DataFrame({'Gender': ['Male', 'Female'], 'Count': [tot_male, tot_female]}), names='Gender', values='Count', color='Gender', color_discrete_map={'Male': '#0284C7', 'Female': '#E11D48'}, template=plotly_template, hole=0.4)
         fig_gender.update_layout(margin=dict(t=20, b=20, l=20, r=20))
         st.plotly_chart(fig_gender, use_container_width=True)
 
     with sg3:
-        st.subheader("🎯 Overall Accomplishment Rate")
+        st.subheader("🎯 Accomplishment Rate")
         fig_gauge = go.Figure(go.Indicator(
             mode="gauge+number",
             value=accomplishment_pct,
             domain={'x': [0, 1], 'y': [0, 1]},
             number={'suffix': "%", 'font': {'size': 28, 'color': "#0284C7"}},
-            gauge={
-                'axis': {'range': [None, 100]},
-                'bar': {'color': "#0284C7"},
-                'steps': [
-                    {'range': [0, 50], 'color': "#FFE4E6"},
-                    {'range': [50, 85], 'color': "#FEF3C7"},
-                    {'range': [85, 100], 'color': "#DCFCE7"}
-                ],
-                'threshold': {
-                    'line': {'color': "red", 'width': 4},
-                    'thickness': 0.75,
-                    'value': 100
-                }
-            }
+            gauge={'axis': {'range': [None, 100]}, 'bar': {'color': "#0284C7"}}
         ))
         fig_gauge.update_layout(margin=dict(t=30, b=20, l=20, r=20), height=280)
         st.plotly_chart(fig_gauge, use_container_width=True)
 
     st.markdown("---")
-
-    # SEQUENCE 2: PAMANA LGU-LED OVERVIEW
-    st.markdown('<div class="sec-card-lgu"><span class="sec-title-lgu">🏛️ 2. PAMANA LGU-Led Program Analytics & Performance</span></div>', unsafe_allow_html=True)
+    st.markdown('<div class="sec-card-lgu"><span class="sec-title-lgu">🏛️ 2. PAMANA LGU-Led Analytics</span></div>', unsafe_allow_html=True)
 
     l1, l2, l3, l4 = st.columns(4)
     l1.metric("TARGET POs", "99 POs")
     l2.metric("PROVIDED WITH ASSISTANCE", "97 POs", delta="↑ 98.0% Accomplished")
-    l3.metric("WAIVED / DISBANDED POs", "2 POs", delta="Pending OPAPRU Approval", delta_color="inverse")
+    l3.metric("WAIVED / DISBANDED POs", "2 POs", delta_color="inverse")
     l4.metric("PENDING FUND WITHDRAWAL", "₱600,000")
 
-    st.markdown("<br>", unsafe_allow_html=True)
-    lg1, lg2 = st.columns([1, 2])
-    with lg1:
-        st.subheader("📈 PAMANA LGU-Led 2025 Status")
-        po_chart_df = pd.DataFrame({
-            'Category': ['Provided Assistance', 'Waived / Disbanded'],
-            'Count': [97, 2]
-        })
-        fig_lgu_po = px.bar(po_chart_df, x='Category', y='Count', color='Category', text_auto=',.0f', color_discrete_map={'Provided Assistance': '#16A34A', 'Waived / Disbanded': '#E11D48'}, template=plotly_template)
-        fig_lgu_po.update_layout(margin=dict(t=20, b=20, l=20, r=20), showlegend=False)
-        st.plotly_chart(fig_lgu_po, use_container_width=True)
-
-    with lg2:
-        st.subheader("🏢 Peoples Organizations (POs) Aggregated Membership Summary")
-        st.dataframe(df_lgu_po_summary, use_container_width=True, hide_index=True)
-
     st.markdown("---")
-
-    # SEQUENCE 3: PAMANA CDPD OVERVIEW
-    st.markdown('<div class="sec-card-cdpd"><span class="sec-title-cdpd">🕊️ 3. PAMANA CDPD (Community-Driven Peace & Development)</span></div>', unsafe_allow_html=True)
+    st.markdown('<div class="sec-card-cdpd"><span class="sec-title-cdpd">🕊️ 3. PAMANA CDPD</span></div>', unsafe_allow_html=True)
     st.info("ℹ️ **PAMANA CDPD Status Notice:** Official Region X CDPD sub-project database metrics are currently undergoing final validation.")
 
-    st.markdown("---")
-    st.subheader("📥 Export Aggregated Executive Analytics Summary")
-    col_exp1, col_exp2 = st.columns([1, 2])
-    with col_exp1:
-        scms_bytes = export_to_excel_bytes(filtered_prov)
-        st.download_button(
-            label="📥 Download Aggregated SCMS Summary (.xlsx)",
-            data=scms_bytes,
-            file_name="PDBBM_SCMS_Executive_Summary.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            use_container_width=True
-        )
-
-# ---------------------------------------------------------
-# INDIVIDUAL MODULE ANALYTICS VIEWS
-# ---------------------------------------------------------
 elif program_view == "📦 1. SCMS Analytics":
     st.markdown('<div class="glow-header-title">📦 1. SCMS Analytics Scorecard</div>', unsafe_allow_html=True)
-    st.markdown('<div class="privacy-banner">🔒 <b>Data Privacy Standard Active:</b> Displaying statistical summaries and province-level performance breakdown. Individual records are protected.</div>', unsafe_allow_html=True)
-
-    st.subheader("📊 Tab 1: Number of Target Per Affiliation")
     st.dataframe(df_scms_affiliation, use_container_width=True, hide_index=True)
-
-    st.markdown("---")
-    st.subheader("📍 Tab 2: SCMS Target Per Province, Municipality & Affiliation (SCMS TARGET PER P-M)")
-    
-    if selected_provinces:
-        upper_selected = [p.upper() for p in selected_provinces]
-        filtered_pm = df_scms_target_pm[df_scms_target_pm['Province'].isin(upper_selected)]
-    else:
-        filtered_pm = df_scms_target_pm
-
-    st.dataframe(filtered_pm, use_container_width=True, hide_index=True)
-
-    st.markdown("---")
-    st.subheader("🗺️ Tab 1: Actual Number of Beneficiaries Per Province & Affiliation")
-    st.dataframe(df_scms_province, use_container_width=True, hide_index=True)
 
 elif program_view == "🏛️ 2. PAMANA LGU-Led Analytics":
     st.markdown('<div class="glow-header-title">🏛️ 2. PAMANA LGU-Led Analytics</div>', unsafe_allow_html=True)
-    st.markdown('<div class="privacy-banner">🔒 <b>Data Privacy Standard Active:</b> Displaying aggregated PO metrics and province-level scorecards. Raw identity records are kept secure.</div>', unsafe_allow_html=True)
-
-    st.subheader("📋 PAMANA LGU-LED 2025 Program Overview")
-    
-    m1, m2, m3, m4 = st.columns(4)
-    m1.metric("TARGET", "99 POs")
-    m2.metric("PROVIDED WITH LIVELIHOOD ASSISTANCE", "97 POs", delta="↑ 98% Accomplished")
-    m3.metric("WAIVED / DISBANDED POs", "2 POs", delta="Disbanded / Waived", delta_color="inverse")
-    m4.metric("PENDING FUND APPROVAL", "₱600,000", delta="OPAPRU Peace Table")
-
-    st.markdown("---")
-    st.subheader("👥 Peoples Organizations (POs) Aggregated Membership Breakdown")
-    st.dataframe(df_lgu_po_summary, use_container_width=True, hide_index=True)
-
-    st.markdown("---")
-    st.subheader("📊 PAMANA LGU-Led Provincial Scorecard")
     st.dataframe(df_lgu_summary, use_container_width=True, hide_index=True)
 
 else:
     st.markdown('<div class="glow-header-title">🕊️ 3. PAMANA CDPD Analytics</div>', unsafe_allow_html=True)
     st.warning("⚠️ CDPD database analytics for Region X are currently under system synchronization.")
 
-# DEVELOPER FOOTER BADGE
 st.markdown("---")
 st.markdown(
     """
