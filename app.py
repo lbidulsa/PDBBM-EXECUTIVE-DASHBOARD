@@ -20,7 +20,7 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------
-# EXECUTIVE TOP NAVBAR & CUSTOM STYLING (KALAHI-INSPIRED)
+# EXECUTIVE TOP NAVBAR & NEON GLOW STYLING INJECTION
 # ---------------------------------------------------------
 st.markdown("""
     <style>
@@ -60,24 +60,19 @@ st.markdown("""
         display: flex !important;
     }
 
-    /* Reduce top padding so Executive Navbar sits cleanly at the top */
     .block-container {
         padding-top: 1.5rem !important;
         max-width: 96% !important;
     }
 
-    /* Executive Navbar Wrapper */
-    .exec-navbar {
-        background: #FFFFFF;
-        border-bottom: 2px solid #E2E8F0;
-        border-radius: 14px;
-        padding: 12px 22px;
-        box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
-        margin-bottom: 14px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
+    /* Keyframe Animations for Neon Pulse & Glow */
+    @keyframes activeNavGlow {
+        0% { box-shadow: 0 0 10px rgba(225, 29, 72, 0.35), 0 0 20px rgba(225, 29, 72, 0.15); }
+        50% { box-shadow: 0 0 18px rgba(225, 29, 72, 0.65), 0 0 30px rgba(225, 29, 72, 0.35); }
+        100% { box-shadow: 0 0 10px rgba(225, 29, 72, 0.35), 0 0 20px rgba(225, 29, 72, 0.15); }
     }
+
+    /* Executive Navbar Brand Typography */
     .exec-brand-title {
         font-size: 22px;
         font-weight: 900;
@@ -96,43 +91,63 @@ st.markdown("""
         letter-spacing: 0.6px;
     }
 
-    /* Top Nav Buttons Styling (Clean Menu Items like KALAHI-CIDSS) */
+    /* ========================================================= */
+    /* 🌟 TOP NAV MENU BUTTONS WITH NEON GLOW & HOVER LIFT 🌟    */
+    /* ========================================================= */
     div[data-testid="stHorizontalBlock"] div.stButton > button {
-        background: transparent !important;
-        border: none !important;
+        background: #FFFFFF !important;
+        border: 1px solid #E2E8F0 !important;
         border-bottom: 3px solid transparent !important;
-        border-radius: 0px !important;
-        color: #334155 !important;
+        border-radius: 10px !important;
+        color: #1E293B !important;
         font-size: 14px !important;
         font-weight: 700 !important;
-        padding: 8px 10px !important;
-        box-shadow: none !important;
-        transition: all 0.2s ease !important;
+        padding: 9px 14px !important;
+        box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04) !important;
+        transition: all 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
     }
+
     div[data-testid="stHorizontalBlock"] div.stButton > button:hover {
         color: #E11D48 !important;
-        border-bottom: 3px solid #E11D48 !important;
         background: #FFF1F2 !important;
-        border-radius: 8px 8px 0 0 !important;
-        transform: none !important;
-    }
-
-    /* Active Menu Button Highlight */
-    div[data-testid="stHorizontalBlock"] div.stButton > button[kind="primary"] {
-        background: linear-gradient(180deg, rgba(225,29,72,0.06) 0%, rgba(225,29,72,0.14) 100%) !important;
-        color: #E11D48 !important;
+        border-color: #E11D48 !important;
         border-bottom: 3px solid #E11D48 !important;
-        border-radius: 8px 8px 0 0 !important;
-        font-weight: 800 !important;
+        transform: translateY(-3px) scale(1.03) !important;
+        box-shadow: 0 0 16px rgba(225, 29, 72, 0.6), 0 0 28px rgba(225, 29, 72, 0.3) !important;
     }
 
-    /* Filter & Action Sub-bar */
-    .filter-subbar {
-        background: #F8FAFC;
-        border: 1px solid #E2E8F0;
-        border-radius: 10px;
-        padding: 8px 16px;
-        margin-bottom: 18px;
+    div[data-testid="stHorizontalBlock"] div.stButton > button:active {
+        transform: translateY(1px) scale(0.98) !important;
+        box-shadow: 0 0 8px rgba(225, 29, 72, 0.4) !important;
+    }
+
+    /* Active Selected Top Menu Tab (Breathing Glow) */
+    div[data-testid="stHorizontalBlock"] div.stButton > button[kind="primary"] {
+        background: linear-gradient(135deg, #FFF1F2 0%, #FFE4E6 100%) !important;
+        color: #E11D48 !important;
+        border: 1px solid #FDA4AF !important;
+        border-bottom: 3px solid #E11D48 !important;
+        border-radius: 10px !important;
+        font-weight: 800 !important;
+        animation: activeNavGlow 2.4s infinite ease-in-out !important;
+    }
+
+    /* Download & Other Action Buttons Glow */
+    div.stDownloadButton > button {
+        background-color: #E2E8F0 !important;
+        color: #0F172A !important;
+        font-weight: bold !important;
+        border-radius: 10px !important;
+        border: 1px solid #CBD5E1 !important;
+        padding: 10px 20px !important;
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+    }
+    div.stDownloadButton > button:hover {
+        background-color: #FFFFFF !important;
+        color: #0284C7 !important;
+        border-color: #0284C7 !important;
+        transform: translateY(-3px) scale(1.02) !important;
+        box-shadow: 0 0 16px rgba(2, 132, 199, 0.6), 0 0 28px rgba(2, 132, 199, 0.3) !important;
     }
 
     .glow-header-title {
@@ -158,7 +173,7 @@ st.markdown("""
     div[data-testid="stMetric"]:hover {
         transform: translateY(-4px) scale(1.02) !important;
         border-color: #E11D48 !important;
-        box-shadow: 0 0 18px rgba(225, 29, 72, 0.35), 0 0 28px rgba(225, 29, 72, 0.15) !important;
+        box-shadow: 0 0 18px rgba(225, 29, 72, 0.45), 0 0 28px rgba(225, 29, 72, 0.2) !important;
     }
     div[data-testid="stMetric"] label {
         color: #475569 !important;
@@ -185,9 +200,9 @@ st.markdown("""
     .sec-card-lgu { border-left: 6px solid #16A34A; }
     .sec-card-cdpd { border-left: 6px solid #0284C7; }
 
-    .sec-card-scms:hover { transform: translateX(4px); box-shadow: 0 0 15px rgba(225, 29, 72, 0.2); }
-    .sec-card-lgu:hover { transform: translateX(4px); box-shadow: 0 0 15px rgba(22, 163, 74, 0.2); }
-    .sec-card-cdpd:hover { transform: translateX(4px); box-shadow: 0 0 15px rgba(2, 132, 199, 0.2); }
+    .sec-card-scms:hover { transform: translateX(4px); box-shadow: 0 0 15px rgba(225, 29, 72, 0.25); }
+    .sec-card-lgu:hover { transform: translateX(4px); box-shadow: 0 0 15px rgba(22, 163, 74, 0.25); }
+    .sec-card-cdpd:hover { transform: translateX(4px); box-shadow: 0 0 15px rgba(2, 132, 199, 0.25); }
 
     .sec-title-scms { color: #E11D48; font-size: 19px; font-weight: 800; }
     .sec-title-lgu { color: #16A34A; font-size: 19px; font-weight: 800; }
@@ -312,7 +327,7 @@ def fetch_all_scms_tabs():
     df_target = pd.DataFrame()
     sync_status = "offline"
 
-    # TIER 1: Google Sheets API v4 (Handles fuzzy tab matching & works with API key if sheet is link-shared)
+    # TIER 1: Google Sheets API v4
     if GOOGLE_API_KEY:
         meta_url = f"https://sheets.googleapis.com/v4/spreadsheets/{SCMS_SHEET_ID}?fields=sheets.properties&key={GOOGLE_API_KEY}"
         try:
@@ -341,7 +356,7 @@ def fetch_all_scms_tabs():
         except Exception:
             pass
 
-    # TIER 2: GVIZ CSV / JSON Fallback (No API key needed if sheet is set to 'Anyone with the link')
+    # TIER 2: GVIZ CSV Fallback
     for target_key, tab_candidates in [
         ("actual", ["ACTUAL NUMBER OF BENES", "ACTUAL NUMBER OF BENES "]),
         ("target", ["SCMS TARGET PER P-M", "SCMS TARGET PER P-M "])
