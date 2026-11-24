@@ -261,8 +261,8 @@ def export_to_excel_bytes(df):
 # ---------------------------------------------------------
 # LIVE GOOGLE SHEETS FETCH ENGINE (3-TIER: API v4 -> CSV -> GVIZ)
 # ---------------------------------------------------------
-SCMS_SHEET_ID = "1jjITQy_Z8w2A-gkghOTnzULjMaC3dx49Y8BCOeZmAyY"
-GOOGLE_API_KEY = st.secrets.get("GOOGLE_API_KEY", "AIzaSyDiW6mBtJbwykz-5Inr2ampnMVG3NXRmOY")
+SCMS_SHEET_ID = st.secrets.get("SCMS_SHEET_ID", "1jjITQy_Z8w2A-gkghOTnzULjMaC3dx49Y8BCOeZmAyY")
+GOOGLE_API_KEY = st.secrets.get("GOOGLE_API_KEY", "")
 
 def normalize_prov_name(val):
     s = str(val).strip().upper()
