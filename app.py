@@ -7,7 +7,7 @@ import requests
 import json
 import re
 import os
-from io import BytesIO
+from io import BytesIO, StringIO
 
 # ---------------------------------------------------------
 # PAGE CONFIGURATION & EXECUTIVE LIGHT UI (NO SIDEBAR)
@@ -20,7 +20,7 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------
-# CUSTOM GLOW ANIMATIONS & SECURITY STYLING INJECTION
+# EXECUTIVE TOP NAVBAR & CUSTOM STYLING (KALAHI-INSPIRED)
 # ---------------------------------------------------------
 st.markdown("""
     <style>
@@ -28,7 +28,7 @@ st.markdown("""
         background: transparent !important;
     }
 
-    /* Hide Sidebar completely since navigation is moved to top */
+    /* Hide Sidebar completely */
     section[data-testid="stSidebar"],
     [data-testid="stSidebarCollapseButton"],
     [data-testid="collapsedControl"] {
@@ -36,7 +36,7 @@ st.markdown("""
         visibility: hidden !important;
     }
 
-    /* Hide Deploy Button, Toolbar Action Buttons (GitHub/Fork), Footer & Cloud Viewer Badge */
+    /* Hide Deploy Button, Toolbar Actions, Footer & Cloud Viewer Badge */
     .stAppDeployButton,
     [data-testid="stToolbarActions"],
     [data-testid="stActionButtonIcon"],
@@ -60,53 +60,92 @@ st.markdown("""
         display: flex !important;
     }
 
+    /* Reduce top padding so Executive Navbar sits cleanly at the top */
+    .block-container {
+        padding-top: 1.5rem !important;
+        max-width: 96% !important;
+    }
+
+    /* Executive Navbar Wrapper */
+    .exec-navbar {
+        background: #FFFFFF;
+        border-bottom: 2px solid #E2E8F0;
+        border-radius: 14px;
+        padding: 12px 22px;
+        box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
+        margin-bottom: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .exec-brand-title {
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: -0.4px;
+        background: linear-gradient(90deg, #1E3A8A, #0284C7, #E11D48);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin: 0;
+        line-height: 1.1;
+    }
+    .exec-brand-sub {
+        font-size: 11px;
+        font-weight: 700;
+        color: #64748B;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+    }
+
+    /* Top Nav Buttons Styling (Clean Menu Items like KALAHI-CIDSS) */
+    div[data-testid="stHorizontalBlock"] div.stButton > button {
+        background: transparent !important;
+        border: none !important;
+        border-bottom: 3px solid transparent !important;
+        border-radius: 0px !important;
+        color: #334155 !important;
+        font-size: 14px !important;
+        font-weight: 700 !important;
+        padding: 8px 10px !important;
+        box-shadow: none !important;
+        transition: all 0.2s ease !important;
+    }
+    div[data-testid="stHorizontalBlock"] div.stButton > button:hover {
+        color: #E11D48 !important;
+        border-bottom: 3px solid #E11D48 !important;
+        background: #FFF1F2 !important;
+        border-radius: 8px 8px 0 0 !important;
+        transform: none !important;
+    }
+
+    /* Active Menu Button Highlight */
+    div[data-testid="stHorizontalBlock"] div.stButton > button[kind="primary"] {
+        background: linear-gradient(180deg, rgba(225,29,72,0.06) 0%, rgba(225,29,72,0.14) 100%) !important;
+        color: #E11D48 !important;
+        border-bottom: 3px solid #E11D48 !important;
+        border-radius: 8px 8px 0 0 !important;
+        font-weight: 800 !important;
+    }
+
+    /* Filter & Action Sub-bar */
+    .filter-subbar {
+        background: #F8FAFC;
+        border: 1px solid #E2E8F0;
+        border-radius: 10px;
+        padding: 8px 16px;
+        margin-bottom: 18px;
+    }
+
     .glow-header-title {
-        font-size: 44px !important;
+        font-size: 32px !important;
         font-weight: 900 !important;
         background: linear-gradient(90deg, #E11D48, #16A34A, #0284C7);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        letter-spacing: -0.8px;
-        margin-bottom: 2px;
-        text-align: center !important;
-    }
-    .glow-header-sub {
-        color: #64748B;
-        font-size: 20px;
-        font-weight: 600;
-        margin-bottom: 16px;
+        letter-spacing: -0.6px;
+        margin-bottom: 8px;
         text-align: center !important;
     }
 
-    /* Top Control Bar Container */
-    .top-nav-container {
-        background: #FFFFFF;
-        border: 1px solid #CBD5E1;
-        border-radius: 14px;
-        padding: 14px 20px;
-        box-shadow: 0 4px 15px rgba(15, 23, 42, 0.05);
-        margin-bottom: 18px;
-    }
-
-    /* Horizontal Radio Pill Styling for Top Nav */
-    div[role="radiogroup"] {
-        flex-direction: row !important;
-        flex-wrap: wrap !important;
-        gap: 10px !important;
-    }
-    div[role="radiogroup"] label {
-        background: #F8FAFC !important;
-        border: 1px solid #CBD5E1 !important;
-        border-radius: 10px !important;
-        padding: 6px 14px !important;
-        font-weight: 700 !important;
-        transition: all 0.25s ease !important;
-    }
-    div[role="radiogroup"] label:hover {
-        border-color: #E11D48 !important;
-        background: #FFF1F2 !important;
-    }
-    
     /* METRIC CARDS GLOW & HOVER ANIMATION */
     div[data-testid="stMetric"] {
         background: #FFFFFF !important;
@@ -119,7 +158,7 @@ st.markdown("""
     div[data-testid="stMetric"]:hover {
         transform: translateY(-4px) scale(1.02) !important;
         border-color: #E11D48 !important;
-        box-shadow: 0 0 18px rgba(225, 29, 72, 0.5), 0 0 28px rgba(225, 29, 72, 0.25) !important;
+        box-shadow: 0 0 18px rgba(225, 29, 72, 0.35), 0 0 28px rgba(225, 29, 72, 0.15) !important;
     }
     div[data-testid="stMetric"] label {
         color: #475569 !important;
@@ -133,59 +172,26 @@ st.markdown("""
         font-size: 24px !important;
     }
 
-    /* UNIFIED BUTTON ANIMATIONS */
-    div.stButton > button, 
-    div.stDownloadButton > button,
-    div.stFormSubmitButton > button {
-        background-color: #E2E8F0 !important;
-        color: #0F172A !important;
-        font-weight: bold !important;
-        border-radius: 8px !important;
-        border: 1px solid #CBD5E1 !important;
-        padding: 8px 20px !important;
-        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05) !important;
-    }
-    div.stButton > button:hover, 
-    div.stDownloadButton > button:hover,
-    div.stFormSubmitButton > button:hover {
-        background-color: #FFFFFF !important;
-        color: #E11D48 !important;
-        border-color: #E11D48 !important;
-        box-shadow: 0 0 15px rgba(225, 29, 72, 0.6), 0 0 25px rgba(225, 29, 72, 0.3) !important;
-        transform: translateY(-2px) scale(1.01) !important;
-    }
-
     /* SECTION CARDS HOVER EFFECT */
     .sec-card-scms, .sec-card-lgu, .sec-card-cdpd {
         background: #FFFFFF;
-        padding: 16px;
+        padding: 14px 18px;
         border-radius: 12px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-        margin-bottom: 18px;
+        margin-bottom: 16px;
         transition: all 0.3s ease;
     }
     .sec-card-scms { border-left: 6px solid #E11D48; }
     .sec-card-lgu { border-left: 6px solid #16A34A; }
     .sec-card-cdpd { border-left: 6px solid #0284C7; }
 
-    .sec-card-scms:hover { transform: translateX(4px); box-shadow: 0 0 15px rgba(225, 29, 72, 0.25); }
-    .sec-card-lgu:hover { transform: translateX(4px); box-shadow: 0 0 15px rgba(22, 163, 74, 0.25); }
-    .sec-card-cdpd:hover { transform: translateX(4px); box-shadow: 0 0 15px rgba(2, 132, 199, 0.25); }
+    .sec-card-scms:hover { transform: translateX(4px); box-shadow: 0 0 15px rgba(225, 29, 72, 0.2); }
+    .sec-card-lgu:hover { transform: translateX(4px); box-shadow: 0 0 15px rgba(22, 163, 74, 0.2); }
+    .sec-card-cdpd:hover { transform: translateX(4px); box-shadow: 0 0 15px rgba(2, 132, 199, 0.2); }
 
-    .sec-title-scms { color: #E11D48; font-size: 20px; font-weight: 800; }
-    .sec-title-lgu { color: #16A34A; font-size: 20px; font-weight: 800; }
-    .sec-title-cdpd { color: #0284C7; font-size: 20px; font-weight: 800; }
-
-    .privacy-pill {
-        background: #EFF6FF;
-        border: 1px solid #BFDBFE;
-        border-radius: 8px;
-        padding: 8px 12px;
-        color: #1E40AF;
-        font-size: 12px;
-        font-weight: 600;
-    }
+    .sec-title-scms { color: #E11D48; font-size: 19px; font-weight: 800; }
+    .sec-title-lgu { color: #16A34A; font-size: 19px; font-weight: 800; }
+    .sec-title-cdpd { color: #0284C7; font-size: 19px; font-weight: 800; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -218,14 +224,14 @@ if hasattr(st, "dialog"):
 # ---------------------------------------------------------
 # LOGO LOADERS & HELPERS
 # ---------------------------------------------------------
-def get_main_header_logo():
-    if os.path.exists("Peace and Dev LOGO.jpg"):
-        return "Peace and Dev LOGO.jpg"
-    elif os.path.exists("logo.png"):
+def get_brand_logo():
+    if os.path.exists("logo.png"):
         return "logo.png"
+    elif os.path.exists("Peace and Dev LOGO.jpg"):
+        return "Peace and Dev LOGO.jpg"
     return None
 
-main_header_logo = get_main_header_logo()
+brand_logo = get_brand_logo()
 plotly_template = "plotly_white"
 
 def export_to_excel_bytes(df):
@@ -238,9 +244,10 @@ def export_to_excel_bytes(df):
     return output.getvalue()
 
 # ---------------------------------------------------------
-# LIVE GOOGLE SHEETS FETCH ENGINE FOR SCMS (2 TABS ONLY)
+# LIVE GOOGLE SHEETS FETCH ENGINE (3-TIER: API v4 -> CSV -> GVIZ)
 # ---------------------------------------------------------
 SCMS_SHEET_ID = "1jjITQy_Z8w2A-gkghOTnzULjMaC3dx49Y8BCOeZmAyY"
+GOOGLE_API_KEY = st.secrets.get("GOOGLE_API_KEY", "AIzaSyDiW6mBtJbwykz-5Inr2ampnMVG3NXRmOY")
 
 def normalize_prov_name(val):
     s = str(val).strip().upper()
@@ -264,81 +271,115 @@ def normalize_prov_name(val):
         return "No Address / Unassigned"
     return str(val).strip().title()
 
+def finalize_dataframe(raw_rows):
+    if not raw_rows or len(raw_rows) < 2:
+        return pd.DataFrame()
+    header_idx = 0
+    for idx, r in enumerate(raw_rows[:10]):
+        row_str = " ".join([str(x).upper() for x in r if x is not None])
+        if any(k in row_str for k in ["PROVINCE", "AFFILIATION", "MUNICIPALITY", "CLIENTS", "BENES", "TARGET"]):
+            header_idx = idx
+            break
+    cols = [str(x).strip() if (x is not None and str(x).strip() != "") else f"Col_{i}" for i, x in enumerate(raw_rows[header_idx])]
+    data_rows = raw_rows[header_idx + 1:]
+
+    # Pad or trim rows to match header length
+    clean_rows = []
+    for r in data_rows:
+        padded = list(r) + [None] * max(0, len(cols) - len(r))
+        clean_rows.append(padded[:len(cols)])
+
+    # Deduplicate column names
+    unique_cols = []
+    seen = {}
+    for c in cols:
+        if c in seen:
+            seen[c] += 1
+            unique_cols.append(f"{c}_{seen[c]}")
+        else:
+            seen[c] = 0
+            unique_cols.append(c)
+
+    df = pd.DataFrame(clean_rows, columns=unique_cols)
+    df.replace(r'^\s*$', np.nan, regex=True, inplace=True)
+    df.dropna(how="all", inplace=True)
+    return df
+
 @st.cache_data(ttl=60)
-def fetch_gsheet_tab(sheet_id, tab_name):
-    """Fetch a specific Google Sheet tab cleanly via GVIZ JSON (handles merged cells & headers accurately)"""
-    encoded_tab = requests.utils.quote(tab_name)
-    url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:json&sheet={encoded_tab}"
-    try:
-        res = requests.get(url, timeout=12)
-        if res.status_code == 200:
-            match = re.search(r"google\.visualization\.Query\.setResponse\((.*)\);", res.text, re.DOTALL)
-            if match:
-                payload = json.loads(match.group(1))
-                table = payload.get("table", {})
-                cols = [str(c.get("label", "")).strip() for c in table.get("cols", [])]
-                rows_raw = table.get("rows", [])
+def fetch_all_scms_tabs():
+    """Fetches 'ACTUAL NUMBER OF BENES' and 'SCMS TARGET PER P-M' via API v4 first, then GVIZ/CSV fallback."""
+    df_actual = pd.DataFrame()
+    df_target = pd.DataFrame()
+    sync_status = "offline"
 
-                parsed_rows = []
-                for r in rows_raw:
-                    cells = r.get("c", [])
-                    row_vals = []
-                    for c in cells:
-                        if c is None:
-                            row_vals.append(None)
+    # TIER 1: Google Sheets API v4 (Handles fuzzy tab matching & works with API key if sheet is link-shared)
+    if GOOGLE_API_KEY:
+        meta_url = f"https://sheets.googleapis.com/v4/spreadsheets/{SCMS_SHEET_ID}?fields=sheets.properties&key={GOOGLE_API_KEY}"
+        try:
+            meta_res = requests.get(meta_url, timeout=10)
+            if meta_res.status_code == 200:
+                sheets_meta = meta_res.json().get("sheets", [])
+                for s in sheets_meta:
+                    props = s.get("properties", {})
+                    exact_title = props.get("title", "")
+                    norm_title = exact_title.strip().upper()
+
+                    if "ACTUAL" in norm_title or "SCMS TARGET" in norm_title:
+                        encoded_exact = requests.utils.quote(exact_title)
+                        val_url = f"https://sheets.googleapis.com/v4/spreadsheets/{SCMS_SHEET_ID}/values/{encoded_exact}?key={GOOGLE_API_KEY}"
+                        val_res = requests.get(val_url, timeout=10)
+                        if val_res.status_code == 200:
+                            values = val_res.json().get("values", [])
+                            parsed_df = finalize_dataframe(values)
+                            if "ACTUAL" in norm_title:
+                                df_actual = parsed_df
+                            elif "SCMS TARGET" in norm_title:
+                                df_target = parsed_df
+                if not df_actual.empty or not df_target.empty:
+                    sync_status = "api_v4"
+                    return df_actual, df_target, sync_status
+        except Exception:
+            pass
+
+    # TIER 2: GVIZ CSV / JSON Fallback (No API key needed if sheet is set to 'Anyone with the link')
+    for target_key, tab_candidates in [
+        ("actual", ["ACTUAL NUMBER OF BENES", "ACTUAL NUMBER OF BENES "]),
+        ("target", ["SCMS TARGET PER P-M", "SCMS TARGET PER P-M "])
+    ]:
+        for t_name in tab_candidates:
+            enc = requests.utils.quote(t_name)
+            csv_url = f"https://docs.google.com/spreadsheets/d/{SCMS_SHEET_ID}/gviz/tq?tqx=out:csv&sheet={enc}"
+            try:
+                r = requests.get(csv_url, timeout=10)
+                if r.status_code == 200 and "<!DOCTYPE html>" not in r.text[:200]:
+                    temp_df = pd.read_csv(StringIO(r.text))
+                    temp_df.dropna(how="all", inplace=True)
+                    if not temp_df.empty:
+                        if target_key == "actual":
+                            df_actual = temp_df
                         else:
-                            val = c.get("v") if c.get("v") is not None else c.get("f")
-                            row_vals.append(val)
-                    parsed_rows.append(row_vals)
+                            df_target = temp_df
+                        sync_status = "gviz_csv"
+                        break
+            except Exception:
+                continue
 
-                # If labels are empty, detect header row automatically
-                if not any(cols) and parsed_rows:
-                    header_idx = 0
-                    for idx, r in enumerate(parsed_rows[:10]):
-                        row_str = " ".join([str(x).upper() for x in r if x is not None])
-                        if "PROVINCE" in row_str or "AFFILIATION" in row_str or "MUNICIPALITY" in row_str:
-                            header_idx = idx
-                            break
-                    cols = [str(x).strip() if x is not None else f"Col_{i}" for i, x in enumerate(parsed_rows[header_idx])]
-                    parsed_rows = parsed_rows[header_idx + 1:]
-
-                # Ensure unique column names
-                clean_cols = []
-                seen = {}
-                for i, c in enumerate(cols):
-                    name = c if c else f"Col_{i}"
-                    if name in seen:
-                        seen[name] += 1
-                        name = f"{name}_{seen[name]}"
-                    else:
-                        seen[name] = 0
-                    clean_cols.append(name)
-
-                df = pd.DataFrame(parsed_rows, columns=clean_cols)
-                df.dropna(how="all", inplace=True)
-                return df
-    except Exception:
-        pass
-    return pd.DataFrame()
+    return df_actual, df_target, sync_status
 
 @st.cache_data(ttl=60)
 def load_scms_live_data():
-    df_actual_raw = fetch_gsheet_tab(SCMS_SHEET_ID, "ACTUAL NUMBER OF BENES")
-    df_target_raw = fetch_gsheet_tab(SCMS_SHEET_ID, "SCMS TARGET PER P-M")
+    df_actual_raw, df_target_raw, sync_status = fetch_all_scms_tabs()
 
-    # -----------------------------------------------------
     # 1. PROCESS TARGET TAB: "SCMS TARGET PER P-M"
-    # -----------------------------------------------------
     df_target_clean = pd.DataFrame()
     if not df_target_raw.empty:
         df_t = df_target_raw.copy()
-        col_map = {c.upper(): c for c in df_t.columns}
+        col_map = {str(c).upper(): c for c in df_t.columns}
         prov_col = next((v for k, v in col_map.items() if "PROVINCE" in k), df_t.columns[0])
         muni_col = next((v for k, v in col_map.items() if "MUNICIPALITY" in k), df_t.columns[1] if len(df_t.columns) > 1 else None)
         aff_col = next((v for k, v in col_map.items() if "AFFILIATION" in k), df_t.columns[2] if len(df_t.columns) > 2 else None)
-        clients_col = next((v for k, v in col_map.items() if "NUMBER OF CLIENTS" in k or "TARGET" in k and "TOTAL" not in k), df_t.columns[3] if len(df_t.columns) > 3 else None)
+        clients_col = next((v for k, v in col_map.items() if ("NUMBER OF CLIENTS" in k or "TARGET" in k) and "TOTAL" not in k), df_t.columns[3] if len(df_t.columns) > 3 else None)
 
-        # Forward-fill merged cells in Province & Municipality
         df_t[prov_col] = df_t[prov_col].replace(r'^\s*$', np.nan, regex=True).ffill()
         if muni_col:
             df_t[muni_col] = df_t[muni_col].replace(r'^\s*$', np.nan, regex=True).ffill()
@@ -360,19 +401,16 @@ def load_scms_live_data():
         else:
             df_t["Target_Count"] = 0
 
-        # Filter out summary rows where Municipality is Total
         if muni_col:
             df_t = df_t[~df_t[muni_col].astype(str).str.upper().str.contains("TOTAL", na=False)]
 
         df_target_clean = df_t
 
-    # -----------------------------------------------------
     # 2. PROCESS ACTUAL TAB: "ACTUAL NUMBER OF BENES"
-    # -----------------------------------------------------
     df_actual_clean = pd.DataFrame()
     if not df_actual_raw.empty:
         df_a = df_actual_raw.copy()
-        col_map_a = {c.upper(): c for c in df_a.columns}
+        col_map_a = {str(c).upper(): c for c in df_a.columns}
         prov_col_a = next((v for k, v in col_map_a.items() if "PROVINCE" in k), df_a.columns[0])
         muni_col_a = next((v for k, v in col_map_a.items() if "MUNICIPALITY" in k), df_a.columns[1] if len(df_a.columns) > 1 else None)
         aff_col_a = next((v for k, v in col_map_a.items() if "AFFILIATION" in k), df_a.columns[2] if len(df_a.columns) > 2 else None)
@@ -390,10 +428,9 @@ def load_scms_live_data():
         else:
             df_a["Affiliation_Clean"] = "UNSPECIFIED"
 
-        # Detect if Male/Female columns exist or Total/Number of Clients column exists
-        male_col = next((v for k, v in col_map_a.items() if k == "MALE" or "MALE" in k and "FEMALE" not in k), None)
+        male_col = next((v for k, v in col_map_a.items() if k == "MALE" or ("MALE" in k and "FEMALE" not in k)), None)
         female_col = next((v for k, v in col_map_a.items() if "FEMALE" in k), None)
-        total_col = next((v for k, v in col_map_a.items() if "NUMBER OF CLIENTS" in k or "ACTUAL" in k or "PROFILED" in k or "TOTAL" in k), None)
+        total_col = next((v for k, v in col_map_a.items() if any(w in k for w in ["NUMBER OF CLIENTS", "ACTUAL", "PROFILED", "BENES", "TOTAL"])), None)
 
         if male_col and female_col:
             df_a["Male_Count"] = pd.to_numeric(df_a[male_col].astype(str).str.replace(",", ""), errors="coerce").fillna(0).astype(int)
@@ -404,7 +441,6 @@ def load_scms_live_data():
             df_a["Male_Count"] = (df_a["Profiled_Count"] * (8264 / 9004)).round().astype(int)
             df_a["Female_Count"] = df_a["Profiled_Count"] - df_a["Male_Count"]
         else:
-            # Find first numeric column after Affiliation
             num_candidates = [c for c in df_a.columns[3:] if pd.to_numeric(df_a[c], errors="coerce").notna().sum() > 0]
             if num_candidates:
                 df_a["Profiled_Count"] = pd.to_numeric(df_a[num_candidates[0]].astype(str).str.replace(",", ""), errors="coerce").fillna(0).astype(int)
@@ -418,11 +454,11 @@ def load_scms_live_data():
 
         df_actual_clean = df_a
 
-    return df_actual_raw, df_target_raw, df_actual_clean, df_target_clean
+    return df_actual_raw, df_target_raw, df_actual_clean, df_target_clean, sync_status
 
-df_actual_raw, df_target_raw, df_actual_clean, df_target_clean = load_scms_live_data()
+df_actual_raw, df_target_raw, df_actual_clean, df_target_clean, sync_status = load_scms_live_data()
 
-# Fallback static datasets if Google Sheet is offline
+# Fallback static datasets
 df_scms_affiliation_fallback = pd.DataFrame({
     'Affiliation': ['MILF', 'MNLF', 'FR', 'DPAGS', 'KAPATIRAN', 'MSAP'],
     'Target': [7472, 606, 3067, 0, 29, 0],
@@ -447,37 +483,63 @@ df_lgu_summary = pd.DataFrame({
 })
 
 # ---------------------------------------------------------
-# HEADER SECTION
+# EXECUTIVE TOP NAVIGATION BAR (KALAHI-CIDSS REGION X STYLE)
 # ---------------------------------------------------------
-hdr_col1, hdr_col2 = st.columns([4, 1])
-with hdr_col1:
-    st.markdown('<div class="glow-header-title">🕊️ PDBBM EXECUTIVE COMPREHENSIVE DASHBOARD</div>', unsafe_allow_html=True)
-    st.markdown('<div class="glow-header-sub">Integrated Multi-Program Decision Support & Live Executive Analytics</div>', unsafe_allow_html=True)
-with hdr_col2:
-    if main_header_logo:
-        st.image(main_header_logo, width=230)
+if "active_nav" not in st.session_state:
+    st.session_state["active_nav"] = "overview"
+
+nav_brand, nav_m1, nav_m2, nav_m3, nav_m4 = st.columns([3.2, 1.8, 1.7, 1.8, 1.5])
+
+with nav_brand:
+    b_col1, b_col2 = st.columns([1.2, 3.8])
+    with b_col1:
+        if brand_logo:
+            st.image(brand_logo, use_container_width=True)
+    with b_col2:
+        st.markdown('<div class="exec-brand-title">PDBBM-RPMO REGION X</div>', unsafe_allow_html=True)
+        st.markdown('<div class="exec-brand-sub">DSWD FO X • Executive Decision Portal</div>', unsafe_allow_html=True)
+
+with nav_m1:
+    if st.button(
+        "🌐 Executive Overview",
+        type="primary" if st.session_state["active_nav"] == "overview" else "secondary",
+        use_container_width=True
+    ):
+        st.session_state["active_nav"] = "overview"
+        st.rerun()
+
+with nav_m2:
+    if st.button(
+        "📦 SCMS Analytics",
+        type="primary" if st.session_state["active_nav"] == "scms" else "secondary",
+        use_container_width=True
+    ):
+        st.session_state["active_nav"] = "scms"
+        st.rerun()
+
+with nav_m3:
+    if st.button(
+        "🏛️ PAMANA LGU-Led",
+        type="primary" if st.session_state["active_nav"] == "lgu" else "secondary",
+        use_container_width=True
+    ):
+        st.session_state["active_nav"] = "lgu"
+        st.rerun()
+
+with nav_m4:
+    if st.button(
+        "🕊️ PAMANA CDPD",
+        type="primary" if st.session_state["active_nav"] == "cdpd" else "secondary",
+        use_container_width=True
+    ):
+        st.session_state["active_nav"] = "cdpd"
+        st.rerun()
+
+st.markdown("<hr style='margin: 6px 0 14px 0; border-color: #CBD5E1;'>", unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# TOP NAVIGATION PORTAL & PROVINCE FILTER BAR (MOVED FROM SIDEBAR)
+# COMPACT PROVINCE FILTER & LIVE SYNC STATUS BAR
 # ---------------------------------------------------------
-st.markdown('<div class="top-nav-container">', unsafe_allow_html=True)
-nav_c1, nav_c2, nav_c3 = st.columns([4.2, 2.3, 1.3])
-
-with nav_c1:
-    st.markdown("**📌 Navigation Portal View:**")
-    program_view = st.radio(
-        "Select Portal View:",
-        [
-            "🌐 Consolidated Overview",
-            "📦 1. SCMS Analytics",
-            "🏛️ 2. PAMANA LGU-Led",
-            "🕊️ 3. PAMANA CDPD"
-        ],
-        horizontal=True,
-        label_visibility="collapsed"
-    )
-
-# Build dynamic province list from live SCMS data + standard list
 live_provinces = []
 if not df_actual_clean.empty:
     live_provinces.extend(df_actual_clean["Province_Clean"].unique().tolist())
@@ -487,26 +549,26 @@ if not df_target_clean.empty:
 base_provinces = ['Bukidnon', 'Lanao del Norte', 'Lanao del Sur', 'Misamis Occidental', 'Misamis Oriental', 'Zamboanga del Sur', 'Zamboanga del Norte']
 all_provinces_list = sorted(list(set(base_provinces + [p for p in live_provinces if p])))
 
-with nav_c2:
-    st.markdown("**🎛️ Province Filter Scope:**")
+f_col1, f_col2, f_col3 = st.columns([3.5, 2.5, 1.3])
+with f_col1:
+    if sync_status != "offline":
+        st.success(f"🟢 **LIVE GSHEET CONNECTED** (`ACTUAL NUMBER OF BENES` & `SCMS TARGET PER P-M`)")
+    else:
+        st.warning("🟠 **GSHEET RESTRICTED (VIEW-ONLY):** Set Google Sheet General Access to *'Anyone with the link → Viewer'* so Streamlit Cloud can read live data.")
+
+with f_col2:
     selected_province_opt = st.selectbox(
-        "Choose Province:",
+        "Province Filter:",
         options=["All Provinces (Region X)"] + all_provinces_list,
         label_visibility="collapsed"
     )
-    if selected_province_opt == "All Provinces (Region X)":
-        selected_provinces = all_provinces_list
-    else:
-        selected_provinces = [selected_province_opt]
+    selected_provinces = all_provinces_list if selected_province_opt == "All Provinces (Region X)" else [selected_province_opt]
 
-with nav_c3:
-    st.markdown("**⚡ Live GSheet Sync:**")
-    if st.button("🔄 Refresh Data", use_container_width=True):
+with f_col3:
+    if st.button("🔄 Sync Live Data", use_container_width=True):
         st.cache_data.clear()
-        st.toast("🔄 Synced Live SCMS Google Sheets!", icon="✨")
+        st.toast("🔄 Refreshed Live SCMS Data!", icon="✨")
         st.rerun()
-
-st.markdown('</div>', unsafe_allow_html=True)
 
 # ---------------------------------------------------------
 # COMPUTE ACCURATE SCMS METRICS FROM LIVE 2 TABS
@@ -514,7 +576,6 @@ st.markdown('</div>', unsafe_allow_html=True)
 using_live_scms = (not df_actual_clean.empty) or (not df_target_clean.empty)
 
 if using_live_scms:
-    # Filter Actuals by selected province(s)
     act_f = df_actual_clean[df_actual_clean["Province_Clean"].isin(selected_provinces)] if not df_actual_clean.empty else pd.DataFrame()
     tgt_f = df_target_clean[df_target_clean["Province_Clean"].isin(selected_provinces)] if not df_target_clean.empty else pd.DataFrame()
 
@@ -524,7 +585,6 @@ if using_live_scms:
     tot_target = int(tgt_f["Target_Count"].sum()) if not tgt_f.empty else 11174
     tot_not_yet = max(0, tot_target - tot_profiled)
 
-    # Province aggregation
     if not act_f.empty:
         df_scms_province = (
             act_f.groupby("Province_Clean", as_index=False)["Profiled_Count"]
@@ -534,7 +594,6 @@ if using_live_scms:
     else:
         df_scms_province = df_scms_province_fallback
 
-    # Affiliation aggregation (merging Target & Actual tabs accurately)
     aff_act = act_f.groupby("Affiliation_Clean", as_index=False).agg(
         Male=("Male_Count", "sum"),
         Female=("Female_Count", "sum"),
@@ -563,8 +622,8 @@ else:
 # ---------------------------------------------------------
 # VIEW 1: CONSOLIDATED EXECUTIVE OVERVIEW
 # ---------------------------------------------------------
-if program_view == "🌐 Consolidated Overview":
-    st.markdown('<div class="sec-card-scms"><span class="sec-title-scms">📦 1. SCMS Analytics (Live Synced: Actual & Target Tabs)</span></div>', unsafe_allow_html=True)
+if st.session_state["active_nav"] == "overview":
+    st.markdown('<div class="sec-card-scms"><span class="sec-title-scms">📦 1. SCMS Analytics (Social Case Management Service)</span></div>', unsafe_allow_html=True)
 
     s1, s2, s3, s4, s5 = st.columns(5)
     s1.metric("ANNUAL TARGET", f"{tot_target:,}")
@@ -605,7 +664,6 @@ if program_view == "🌐 Consolidated Overview":
         fig_gauge.update_layout(margin=dict(t=30, b=20, l=20, r=20), height=280)
         st.plotly_chart(fig_gauge, use_container_width=True)
 
-    # Display the 2 SCMS Google Sheet Tabs directly on the Dashboard
     st.markdown("#### 📋 SCMS Live Source Tables (2 Active Tabs Only)")
     tab_scms_1, tab_scms_2, tab_scms_3 = st.tabs([
         "📊 Consolidated Affiliation Scorecard",
@@ -618,12 +676,12 @@ if program_view == "🌐 Consolidated Overview":
         if not df_actual_raw.empty:
             st.dataframe(df_actual_raw, use_container_width=True, hide_index=True)
         else:
-            st.warning("⚠️ Unable to fetch 'ACTUAL NUMBER OF BENES' tab. Please verify sheet sharing permissions.")
+            st.info("ℹ️ Waiting for Google Sheet public link access (`Anyone with the link → Viewer`) to display `ACTUAL NUMBER OF BENES`.")
     with tab_scms_3:
         if not df_target_raw.empty:
             st.dataframe(df_target_raw, use_container_width=True, hide_index=True)
         else:
-            st.warning("⚠️ Unable to fetch 'SCMS TARGET PER P-M' tab. Please verify sheet sharing permissions.")
+            st.info("ℹ️ Waiting for Google Sheet public link access (`Anyone with the link → Viewer`) to display `SCMS TARGET PER P-M`.")
 
     st.markdown("---")
     st.markdown('<div class="sec-card-lgu"><span class="sec-title-lgu">🏛️ 2. PAMANA LGU-Led Analytics</span></div>', unsafe_allow_html=True)
@@ -639,10 +697,10 @@ if program_view == "🌐 Consolidated Overview":
     st.info("ℹ️ **PAMANA CDPD Status Notice:** Official Region X CDPD sub-project database metrics are currently undergoing final validation.")
 
 # ---------------------------------------------------------
-# VIEW 2: 1. SCMS ANALYTICS DEDICATED VIEW
+# VIEW 2: SCMS ANALYTICS DEDICATED VIEW
 # ---------------------------------------------------------
-elif program_view == "📦 1. SCMS Analytics":
-    st.markdown('<div class="glow-header-title">📦 1. SCMS Analytics & Live Source Tabs</div>', unsafe_allow_html=True)
+elif st.session_state["active_nav"] == "scms":
+    st.markdown('<div class="glow-header-title">📦 SCMS Analytics & Live Source Tabs</div>', unsafe_allow_html=True)
 
     s1, s2, s3, s4, s5 = st.columns(5)
     s1.metric("ANNUAL TARGET", f"{tot_target:,}")
@@ -664,33 +722,31 @@ elif program_view == "📦 1. SCMS Analytics":
     )
 
     st.markdown("---")
-    st.subheader("🗂️ Live Google Sheet Source Tabs (Displayed Exclusively)")
+    st.subheader("🗂️ Live Google Sheet Source Tabs (2 Tabs Only)")
     t1, t2 = st.tabs(["📑 ACTUAL NUMBER OF BENES", "🎯 SCMS TARGET PER P-M"])
     with t1:
-        st.caption("Source Tab: `ACTUAL NUMBER OF BENES`")
         if not df_actual_raw.empty:
             st.dataframe(df_actual_raw, use_container_width=True, hide_index=True)
         else:
-            st.error("Unable to load `ACTUAL NUMBER OF BENES`.")
+            st.warning("⚠️ Restricted Sheet: Ask the sheet owner to change General Access to 'Anyone with the link → Viewer' (or Publish to Web) so the API can pull `ACTUAL NUMBER OF BENES`.")
     with t2:
-        st.caption("Source Tab: `SCMS TARGET PER P-M`")
         if not df_target_raw.empty:
             st.dataframe(df_target_raw, use_container_width=True, hide_index=True)
         else:
-            st.error("Unable to load `SCMS TARGET PER P-M`.")
+            st.warning("⚠️ Restricted Sheet: Ask the sheet owner to change General Access to 'Anyone with the link → Viewer' (or Publish to Web) so the API can pull `SCMS TARGET PER P-M`.")
 
 # ---------------------------------------------------------
-# VIEW 3: 2. PAMANA LGU-LED ANALYTICS
+# VIEW 3: PAMANA LGU-LED ANALYTICS
 # ---------------------------------------------------------
-elif program_view == "🏛️ 2. PAMANA LGU-Led":
-    st.markdown('<div class="glow-header-title">🏛️ 2. PAMANA LGU-Led Analytics</div>', unsafe_allow_html=True)
+elif st.session_state["active_nav"] == "lgu":
+    st.markdown('<div class="glow-header-title">🏛️ PAMANA LGU-Led Analytics</div>', unsafe_allow_html=True)
     st.dataframe(df_lgu_summary, use_container_width=True, hide_index=True)
 
 # ---------------------------------------------------------
-# VIEW 4: 3. PAMANA CDPD ANALYTICS
+# VIEW 4: PAMANA CDPD ANALYTICS
 # ---------------------------------------------------------
 else:
-    st.markdown('<div class="glow-header-title">🕊️ 3. PAMANA CDPD Analytics</div>', unsafe_allow_html=True)
+    st.markdown('<div class="glow-header-title">🕊️ PAMANA CDPD Analytics</div>', unsafe_allow_html=True)
     st.warning("⚠️ CDPD database analytics for Region X are currently under system synchronization.")
 
 # ---------------------------------------------------------
