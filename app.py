@@ -259,7 +259,21 @@ def export_to_excel_bytes(df):
     return output.getvalue()
 
 # ---------------------------------------------------------
-# LIVE GOOGLE SHEETS FETCH ENGINE (3-TIER: API v4 -> CSV -> GVIZ)
+# EXTERNAL PORTAL & PUBLISHED SCMS SHEET CONSTANTS
+# ---------------------------------------------------------
+PAMANA_CDPD_URL = st.secrets.get("PAMANA_CDPD_URL", "https://pdbbmpamanacdpd.streamlit.app/")
+SCMS_PUB_ID = "2PACX-1vSiS3wDEdJUU6Xh8jL66xpLMz8RoDnv-Z32rcF6TeCHg_UKwAutb6_VbMyViNeMi7R9SyiEm-5bU9S_"
+SCMS_PUB_HTML_URL = st.secrets.get(
+    "SCMS_PUB_HTML_URL",
+    f"https://docs.google.com/spreadsheets/d/e/{SCMS_PUB_ID}/pubhtml?gid=0&single=true"
+)
+SCMS_PUB_CSV_URL = st.secrets.get(
+    "SCMS_PUB_CSV_URL",
+    f"https://docs.google.com/spreadsheets/d/e/{SCMS_PUB_ID}/pub?gid=0&single=true&output=csv"
+)
+
+# ---------------------------------------------------------
+# LIVE GOOGLE SHEETS FETCH ENGINE (PUBLISHED -> API v4 -> CSV -> GVIZ)
 # ---------------------------------------------------------
 SCMS_SHEET_ID = st.secrets.get("SCMS_SHEET_ID", "1jjITQy_Z8w2A-gkghOTnzULjMaC3dx49Y8BCOeZmAyY")
 GOOGLE_API_KEY = st.secrets.get("GOOGLE_API_KEY", "")
@@ -298,13 +312,11 @@ def finalize_dataframe(raw_rows):
     cols = [str(x).strip() if (x is not None and str(x).strip() != "") else f"Col_{i}" for i, x in enumerate(raw_rows[header_idx])]
     data_rows = raw_rows[header_idx + 1:]
 
-    # Pad or trim rows to match header length
     clean_rows = []
     for r in data_rows:
         padded = list(r) + [None] * max(0, len(cols) - len(r))
         clean_rows.append(padded[:len(cols)])
 
-    # Deduplicate column names
     unique_cols = []
     seen = {}
     for c in cols:
@@ -322,10 +334,36 @@ def finalize_dataframe(raw_rows):
 
 @st.cache_data(ttl=60)
 def fetch_all_scms_tabs():
-    """Fetches 'ACTUAL NUMBER OF BENES' and 'SCMS TARGET PER P-M' via API v4 first, then GVIZ/CSV fallback."""
+    """Fetches SCMS published/live tabs via Published CSV/HTML, API v4, or GVIZ fallback."""
     df_actual = pd.DataFrame()
     df_target = pd.DataFrame()
     sync_status = "offline"
+
+    # TIER 0: Published SCMS Sheet CSV/HTML
+    try:
+        pub_res = requests.get(SCMS_PUB_CSV_URL, timeout=10)
+        if pub_res.status_code == 200 and "<!DOCTYPE html>" not in pub_res.text[:200] and "<html" not in pub_res.text[:200].lower():
+            pub_df = pd.read_csv(StringIO(pub_res.text))
+            pub_df.dropna(how="all", inplace=True)
+            if not pub_df.empty:
+                df_actual = pub_df
+                sync_status = "published_sheet"
+    except Exception:
+        pass
+
+    if df_actual.empty:
+        try:
+            html_res = requests.get(SCMS_PUB_HTML_URL, timeout=10)
+            if html_res.status_code == 200:
+                tables = pd.read_html(StringIO(html_res.text))
+                for tbl in tables:
+                    tbl = tbl.dropna(how="all")
+                    if not tbl.empty and tbl.shape[1] >= 2:
+                        df_actual = tbl
+                        sync_status = "published_html"
+                        break
+        except Exception:
+            pass
 
     # TIER 1: Google Sheets API v4
     if GOOGLE_API_KEY:
@@ -361,6 +399,8 @@ def fetch_all_scms_tabs():
         ("actual", ["ACTUAL NUMBER OF BENES", "ACTUAL NUMBER OF BENES "]),
         ("target", ["SCMS TARGET PER P-M", "SCMS TARGET PER P-M "])
     ]:
+        if target_key == "actual" and not df_actual.empty:
+            continue
         for t_name in tab_candidates:
             enc = requests.utils.quote(t_name)
             csv_url = f"https://docs.google.com/spreadsheets/d/{SCMS_SHEET_ID}/gviz/tq?tqx=out:csv&sheet={enc}"
@@ -374,7 +414,8 @@ def fetch_all_scms_tabs():
                             df_actual = temp_df
                         else:
                             df_target = temp_df
-                        sync_status = "gviz_csv"
+                        if sync_status == "offline":
+                            sync_status = "gviz_csv"
                         break
             except Exception:
                 continue
@@ -385,7 +426,6 @@ def fetch_all_scms_tabs():
 def load_scms_live_data():
     df_actual_raw, df_target_raw, sync_status = fetch_all_scms_tabs()
 
-    # 1. PROCESS TARGET TAB: "SCMS TARGET PER P-M"
     df_target_clean = pd.DataFrame()
     if not df_target_raw.empty:
         df_t = df_target_raw.copy()
@@ -421,7 +461,6 @@ def load_scms_live_data():
 
         df_target_clean = df_t
 
-    # 2. PROCESS ACTUAL TAB: "ACTUAL NUMBER OF BENES"
     df_actual_clean = pd.DataFrame()
     if not df_actual_raw.empty:
         df_a = df_actual_raw.copy()
@@ -471,7 +510,16 @@ def load_scms_live_data():
 
     return df_actual_raw, df_target_raw, df_actual_clean, df_target_clean, sync_status
 
+@st.cache_data(ttl=120)
+def check_cdpd_portal_status(url):
+    try:
+        r = requests.get(url, timeout=8)
+        return r.status_code == 200, r.status_code
+    except Exception as ex:
+        return False, str(ex)
+
 df_actual_raw, df_target_raw, df_actual_clean, df_target_clean, sync_status = load_scms_live_data()
+cdpd_online, cdpd_status_info = check_cdpd_portal_status(PAMANA_CDPD_URL)
 
 # Fallback static datasets
 df_scms_affiliation_fallback = pd.DataFrame({
@@ -564,12 +612,12 @@ if not df_target_clean.empty:
 base_provinces = ['Bukidnon', 'Lanao del Norte', 'Lanao del Sur', 'Misamis Occidental', 'Misamis Oriental', 'Zamboanga del Sur', 'Zamboanga del Norte']
 all_provinces_list = sorted(list(set(base_provinces + [p for p in live_provinces if p])))
 
-f_col1, f_col2, f_col3 = st.columns([3.5, 2.5, 1.3])
+f_col1, f_col2, f_col3, f_col4 = st.columns([2.7, 2.0, 1.3, 1.3])
 with f_col1:
     if sync_status != "offline":
-        st.success(f"🟢 **LIVE GSHEET CONNECTED** (`ACTUAL NUMBER OF BENES` & `SCMS TARGET PER P-M`)")
+        st.success(f"🟢 **LIVE SCMS SHEET CONNECTED** (`{sync_status}`)")
     else:
-        st.warning("🟠 **GSHEET RESTRICTED (VIEW-ONLY):** Set Google Sheet General Access to *'Anyone with the link → Viewer'* so Streamlit Cloud can read live data.")
+        st.info("ℹ️ **SCMS Published Link Active:** Viewing SCMS scorecard & published sheet.")
 
 with f_col2:
     selected_province_opt = st.selectbox(
@@ -580,9 +628,12 @@ with f_col2:
     selected_provinces = all_provinces_list if selected_province_opt == "All Provinces (Region X)" else [selected_province_opt]
 
 with f_col3:
+    st.link_button("🕊️ Open CDPD", PAMANA_CDPD_URL, use_container_width=True)
+
+with f_col4:
     if st.button("🔄 Sync Live Data", use_container_width=True):
         st.cache_data.clear()
-        st.toast("🔄 Refreshed Live SCMS Data!", icon="✨")
+        st.toast("🔄 Refreshed Live SCMS & CDPD Status!", icon="✨")
         st.rerun()
 
 # ---------------------------------------------------------
@@ -679,11 +730,12 @@ if st.session_state["active_nav"] == "overview":
         fig_gauge.update_layout(margin=dict(t=30, b=20, l=20, r=20), height=280)
         st.plotly_chart(fig_gauge, use_container_width=True)
 
-    st.markdown("#### 📋 SCMS Live Source Tables (2 Active Tabs Only)")
-    tab_scms_1, tab_scms_2, tab_scms_3 = st.tabs([
+    st.markdown("#### 📋 SCMS Live Source Tables & Published Sheet")
+    tab_scms_1, tab_scms_2, tab_scms_3, tab_scms_4 = st.tabs([
         "📊 Consolidated Affiliation Scorecard",
         "📑 Tab 1: ACTUAL NUMBER OF BENES",
-        "🎯 Tab 2: SCMS TARGET PER P-M"
+        "🎯 Tab 2: SCMS TARGET PER P-M",
+        "🌐 Published SCMS Sheet"
     ])
     with tab_scms_1:
         st.dataframe(df_scms_affiliation, use_container_width=True, hide_index=True)
@@ -691,12 +743,18 @@ if st.session_state["active_nav"] == "overview":
         if not df_actual_raw.empty:
             st.dataframe(df_actual_raw, use_container_width=True, hide_index=True)
         else:
-            st.info("ℹ️ Waiting for Google Sheet public link access (`Anyone with the link → Viewer`) to display `ACTUAL NUMBER OF BENES`.")
+            st.info(f"ℹ️ Published SCMS Sheet link configured: [Open Published SCMS Sheet]({SCMS_PUB_HTML_URL})")
     with tab_scms_3:
         if not df_target_raw.empty:
             st.dataframe(df_target_raw, use_container_width=True, hide_index=True)
         else:
-            st.info("ℹ️ Waiting for Google Sheet public link access (`Anyone with the link → Viewer`) to display `SCMS TARGET PER P-M`.")
+            st.info("ℹ️ Waiting for `SCMS TARGET PER P-M` tab access or API key.")
+    with tab_scms_4:
+        st.link_button("🔗 Open Published SCMS Sheet in New Tab", SCMS_PUB_HTML_URL)
+        st.markdown(
+            f'<iframe src="{SCMS_PUB_HTML_URL}" width="100%" height="460" style="border: 1px solid #CBD5E1; border-radius: 10px; background: #FFFFFF;"></iframe>',
+            unsafe_allow_html=True
+        )
 
     st.markdown("---")
     st.markdown('<div class="sec-card-lgu"><span class="sec-title-lgu">🏛️ 2. PAMANA LGU-Led Analytics</span></div>', unsafe_allow_html=True)
@@ -709,7 +767,18 @@ if st.session_state["active_nav"] == "overview":
 
     st.markdown("---")
     st.markdown('<div class="sec-card-cdpd"><span class="sec-title-cdpd">🕊️ 3. PAMANA CDPD</span></div>', unsafe_allow_html=True)
-    st.info("ℹ️ **PAMANA CDPD Status Notice:** Official Region X CDPD sub-project database metrics are currently undergoing final validation.")
+    c_ov1, c_ov2 = st.columns([3, 1.2])
+    with c_ov1:
+        status_badge = "🟢 Online" if cdpd_online else f"🟡 Check Link ({cdpd_status_info})"
+        st.info(
+            f"**PAMANA CDPD Portal (`{PAMANA_CDPD_URL}`):** Status: **{status_badge}** — "
+            "Includes CEAC Barangay & Municipal activities, Sub-Project Closeout, Geotagged Photos, and Disbursements."
+        )
+    with c_ov2:
+        st.link_button("🚀 Launch PAMANA CDPD Portal", PAMANA_CDPD_URL, use_container_width=True)
+        if st.button("🧭 Go to CDPD View", key="btn_ov_to_cdpd", use_container_width=True):
+            st.session_state["active_nav"] = "cdpd"
+            st.rerun()
 
 # ---------------------------------------------------------
 # VIEW 2: SCMS ANALYTICS DEDICATED VIEW
@@ -737,18 +806,24 @@ elif st.session_state["active_nav"] == "scms":
     )
 
     st.markdown("---")
-    st.subheader("🗂️ Live Google Sheet Source Tabs (2 Tabs Only)")
-    t1, t2 = st.tabs(["📑 ACTUAL NUMBER OF BENES", "🎯 SCMS TARGET PER P-M"])
+    st.subheader("🗂️ Live Google Sheet Source Tabs & Published Sheet")
+    t1, t2, t3 = st.tabs(["📑 ACTUAL NUMBER OF BENES", "🎯 SCMS TARGET PER P-M", "🌐 Published SCMS Sheet"])
     with t1:
         if not df_actual_raw.empty:
             st.dataframe(df_actual_raw, use_container_width=True, hide_index=True)
         else:
-            st.warning("⚠️ Restricted Sheet: Ask the sheet owner to change General Access to 'Anyone with the link → Viewer' (or Publish to Web) so the API can pull `ACTUAL NUMBER OF BENES`.")
+            st.warning(f"⚠️ Using fallback/published view. Open [Published SCMS Sheet]({SCMS_PUB_HTML_URL}) directly or set General Access to 'Anyone with the link → Viewer'.")
     with t2:
         if not df_target_raw.empty:
             st.dataframe(df_target_raw, use_container_width=True, hide_index=True)
         else:
             st.warning("⚠️ Restricted Sheet: Ask the sheet owner to change General Access to 'Anyone with the link → Viewer' (or Publish to Web) so the API can pull `SCMS TARGET PER P-M`.")
+    with t3:
+        st.link_button("🔗 Open Published SCMS Sheet", SCMS_PUB_HTML_URL)
+        st.markdown(
+            f'<iframe src="{SCMS_PUB_HTML_URL}" width="100%" height="520" style="border: 1px solid #CBD5E1; border-radius: 10px; background: #FFFFFF;"></iframe>',
+            unsafe_allow_html=True
+        )
 
 # ---------------------------------------------------------
 # VIEW 3: PAMANA LGU-LED ANALYTICS
@@ -758,11 +833,35 @@ elif st.session_state["active_nav"] == "lgu":
     st.dataframe(df_lgu_summary, use_container_width=True, hide_index=True)
 
 # ---------------------------------------------------------
-# VIEW 4: PAMANA CDPD ANALYTICS
+# VIEW 4: PAMANA CDPD ANALYTICS (LINKED TO PAMANA CDPD PORTAL)
 # ---------------------------------------------------------
 else:
-    st.markdown('<div class="glow-header-title">🕊️ PAMANA CDPD Analytics</div>', unsafe_allow_html=True)
-    st.warning("⚠️ CDPD database analytics for Region X are currently under system synchronization.")
+    st.markdown('<div class="glow-header-title">🕊️ PAMANA CDPD Portal & Analytics</div>', unsafe_allow_html=True)
+
+    c_top1, c_top2, c_top3 = st.columns([2.6, 1.2, 1.2])
+    with c_top1:
+        if cdpd_online:
+            st.success(f"🟢 **PAMANA CDPD PORTAL CONNECTED:** `{PAMANA_CDPD_URL}` (Includes CEAC Barangay & Municipal data)")
+        else:
+            st.info(f"🔗 **PAMANA CDPD PORTAL LINKED:** `{PAMANA_CDPD_URL}` (Status: `{cdpd_status_info}`)")
+    with c_top2:
+        st.link_button("🚀 Open PAMANA CDPD App", PAMANA_CDPD_URL, use_container_width=True)
+    with c_top3:
+        show_embed = st.toggle("Embed Portal", value=True, key="toggle_cdpd_embed")
+
+    st.markdown("---")
+    if show_embed:
+        st.caption("Tip: Kung dili mo-load ang embedded window tungod sa browser/Streamlit frame headers, i-click ang **Open PAMANA CDPD App** sa ibabaw.")
+        st.markdown(
+            f"""
+            <iframe src="{PAMANA_CDPD_URL}" width="100%" height="780"
+                    style="border: 1px solid #CBD5E1; border-radius: 12px; background: #FFFFFF;"
+                    allow="geolocation"></iframe>
+            """,
+            unsafe_allow_html=True
+        )
+    else:
+        st.info(f"Click **Open PAMANA CDPD App** above to open `{PAMANA_CDPD_URL}` in a full browser window.")
 
 # ---------------------------------------------------------
 # FOOTER & DATA PRIVACY COMPLIANCE NOTICE
