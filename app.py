@@ -8,6 +8,7 @@ import json
 import re
 import os
 from io import BytesIO, StringIO
+from sqlalchemy import create_engine, text
 
 # ---------------------------------------------------------
 # PAGE CONFIGURATION & EXECUTIVE LIGHT UI (NO SIDEBAR)
@@ -273,6 +274,77 @@ SCMS_PUB_CSV_URL = st.secrets.get(
 )
 
 # ---------------------------------------------------------
+# LIVE PAMANA CDPD SUPABASE CONNECTION ENGINE
+# ---------------------------------------------------------
+DEFAULT_CDPD_DB_URL = ""
+
+def get_cdpd_db_url():
+    try:
+        if "SUPABASE_URL" in st.secrets and str(st.secrets["SUPABASE_URL"]).strip():
+            return str(st.secrets["SUPABASE_URL"]).strip()
+        if "postgres" in st.secrets and "url" in st.secrets["postgres"]:
+            return str(st.secrets["postgres"]["url"]).strip()
+    except Exception:
+        pass
+    return DEFAULT_CDPD_DB_URL
+
+@st.cache_resource
+def get_cdpd_engine(db_url: str):
+    if not db_url:
+        return None
+    return create_engine(
+        db_url,
+        pool_pre_ping=True,
+        pool_size=5,
+        max_overflow=10,
+        pool_recycle=300
+    )
+
+@st.cache_data(ttl=60)
+def load_cdpd_live_data(db_url: str):
+    """Loads aggregate/summary tables from the PAMANA CDPD Supabase database."""
+    result = {
+        "connected": False,
+        "error": "",
+        "ceac_barangay": pd.DataFrame(),
+        "ceac_municipal": pd.DataFrame(),
+        "closeout": pd.DataFrame(),
+        "disbursement": pd.DataFrame(),
+    }
+    if not db_url:
+        result["error"] = "SUPABASE_URL not configured in Streamlit Secrets."
+        return result
+
+    try:
+        eng = get_cdpd_engine(db_url)
+        with eng.connect() as conn:
+            conn.execute(text("SELECT 1"))
+
+        def safe_read(sql_query):
+            try:
+                return pd.read_sql_query(text(sql_query), eng)
+            except Exception:
+                return pd.DataFrame()
+
+        result["ceac_barangay"] = safe_read(
+            "SELECT id, activity_name, region, province, municipality, barangay, cycle_batch, activity_date, mov_status, encoded_status FROM ceac_barangay ORDER BY id DESC"
+        )
+        result["ceac_municipal"] = safe_read(
+            "SELECT id, activity_name, region, province, municipality, cycle_batch, activity_date, mov_status, encoded_status FROM ceac_municipal ORDER BY id DESC"
+        )
+        result["closeout"] = safe_read(
+            "SELECT id, sp_id, sp_name, municipality, barangay, cycle_batch, overall_closeout_status, target_hhs, actual_hhs FROM sub_project_closeout_tracker ORDER BY id DESC"
+        )
+        result["disbursement"] = safe_read(
+            "SELECT id, sp_id, municipality, dv_number, disbursement_date, amount, net_amount, status FROM disbursement ORDER BY id DESC"
+        )
+        result["connected"] = True
+    except Exception as ex:
+        result["error"] = str(ex)
+
+    return result
+
+# ---------------------------------------------------------
 # LIVE GOOGLE SHEETS FETCH ENGINE (PUBLISHED -> API v4 -> CSV -> GVIZ)
 # ---------------------------------------------------------
 SCMS_SHEET_ID = st.secrets.get("SCMS_SHEET_ID", "1jjITQy_Z8w2A-gkghOTnzULjMaC3dx49Y8BCOeZmAyY")
@@ -520,6 +592,7 @@ def check_cdpd_portal_status(url):
 
 df_actual_raw, df_target_raw, df_actual_clean, df_target_clean, sync_status = load_scms_live_data()
 cdpd_online, cdpd_status_info = check_cdpd_portal_status(PAMANA_CDPD_URL)
+cdpd_db = load_cdpd_live_data(get_cdpd_db_url())
 
 # Fallback static datasets
 df_scms_affiliation_fallback = pd.DataFrame({
@@ -608,16 +681,21 @@ if not df_actual_clean.empty:
     live_provinces.extend(df_actual_clean["Province_Clean"].unique().tolist())
 if not df_target_clean.empty:
     live_provinces.extend(df_target_clean["Province_Clean"].unique().tolist())
+for tbl_key in ["ceac_barangay", "ceac_municipal", "closeout", "disbursement"]:
+    t_df = cdpd_db.get(tbl_key, pd.DataFrame())
+    if not t_df.empty and "province" in t_df.columns:
+        live_provinces.extend([normalize_prov_name(x) for x in t_df["province"].dropna().tolist()])
 
 base_provinces = ['Bukidnon', 'Lanao del Norte', 'Lanao del Sur', 'Misamis Occidental', 'Misamis Oriental', 'Zamboanga del Sur', 'Zamboanga del Norte']
 all_provinces_list = sorted(list(set(base_provinces + [p for p in live_provinces if p])))
 
 f_col1, f_col2, f_col3, f_col4 = st.columns([2.7, 2.0, 1.3, 1.3])
 with f_col1:
+    db_badge = "🟢 CDPD DB Connected" if cdpd_db["connected"] else "🟡 CDPD DB Pending Secrets"
     if sync_status != "offline":
-        st.success(f"🟢 **LIVE SCMS SHEET CONNECTED** (`{sync_status}`)")
+        st.success(f"🟢 **LIVE SCMS (`{sync_status}`)** • {db_badge}")
     else:
-        st.info("ℹ️ **SCMS Published Link Active:** Viewing SCMS scorecard & published sheet.")
+        st.info(f"ℹ️ **SCMS Published Link Active** • {db_badge}")
 
 with f_col2:
     selected_province_opt = st.selectbox(
@@ -633,7 +711,7 @@ with f_col3:
 with f_col4:
     if st.button("🔄 Sync Live Data", use_container_width=True):
         st.cache_data.clear()
-        st.toast("🔄 Refreshed Live SCMS & CDPD Status!", icon="✨")
+        st.toast("🔄 Refreshed Live SCMS & CDPD Data!", icon="✨")
         st.rerun()
 
 # ---------------------------------------------------------
@@ -684,6 +762,27 @@ else:
     tot_male = int(np.round(tot_profiled * (8264 / 9004))) if tot_profiled > 0 else 0
     tot_female = tot_profiled - tot_male
     tot_not_yet = max(0, tot_target - tot_profiled)
+
+# ---------------------------------------------------------
+# FILTER LIVE CDPD DATA BY SELECTED PROVINCE
+# ---------------------------------------------------------
+def filter_by_prov_col(df_in):
+    if df_in is None or df_in.empty:
+        return pd.DataFrame()
+    if selected_province_opt == "All Provinces (Region X)" or "province" not in df_in.columns:
+        return df_in.copy()
+    norm_col = df_in["province"].apply(normalize_prov_name)
+    return df_in[norm_col.isin(selected_provinces)].copy()
+
+df_cdpd_brgy_f = filter_by_prov_col(cdpd_db.get("ceac_barangay", pd.DataFrame()))
+df_cdpd_muni_f = filter_by_prov_col(cdpd_db.get("ceac_municipal", pd.DataFrame()))
+df_cdpd_sp_f = filter_by_prov_col(cdpd_db.get("closeout", pd.DataFrame()))
+df_cdpd_disb_f = filter_by_prov_col(cdpd_db.get("disbursement", pd.DataFrame()))
+
+cdpd_brgy_cnt = len(df_cdpd_brgy_f)
+cdpd_muni_cnt = len(df_cdpd_muni_f)
+cdpd_sp_cnt = len(df_cdpd_sp_f)
+cdpd_disb_tot = float(pd.to_numeric(df_cdpd_disb_f["amount"], errors="coerce").fillna(0).sum()) if (not df_cdpd_disb_f.empty and "amount" in df_cdpd_disb_f.columns) else 0.0
 
 # ---------------------------------------------------------
 # VIEW 1: CONSOLIDATED EXECUTIVE OVERVIEW
@@ -767,12 +866,19 @@ if st.session_state["active_nav"] == "overview":
 
     st.markdown("---")
     st.markdown('<div class="sec-card-cdpd"><span class="sec-title-cdpd">🕊️ 3. PAMANA CDPD</span></div>', unsafe_allow_html=True)
+    if cdpd_db["connected"]:
+        cm1, cm2, cm3, cm4 = st.columns(4)
+        cm1.metric("CEAC BARANGAY LOGS", f"{cdpd_brgy_cnt:,}")
+        cm2.metric("CEAC MUNICIPAL LOGS", f"{cdpd_muni_cnt:,}")
+        cm3.metric("SUB-PROJECTS TRACKED", f"{cdpd_sp_cnt:,}")
+        cm4.metric("TOTAL DISBURSED", f"₱{cdpd_disb_tot:,.2f}")
+
     c_ov1, c_ov2 = st.columns([3, 1.2])
     with c_ov1:
         status_badge = "🟢 Online" if cdpd_online else f"🟡 Check Link ({cdpd_status_info})"
+        db_note = "Live Supabase sync active." if cdpd_db["connected"] else f"Add `SUPABASE_URL` to Streamlit Secrets to pull live CDPD counts ({cdpd_db['error']})."
         st.info(
-            f"**PAMANA CDPD Portal (`{PAMANA_CDPD_URL}`):** Status: **{status_badge}** — "
-            "Includes CEAC Barangay & Municipal activities, Sub-Project Closeout, Geotagged Photos, and Disbursements."
+            f"**PAMANA CDPD Portal (`{PAMANA_CDPD_URL}`):** Status: **{status_badge}** — {db_note}"
         )
     with c_ov2:
         st.link_button("🚀 Launch PAMANA CDPD Portal", PAMANA_CDPD_URL, use_container_width=True)
@@ -833,24 +939,69 @@ elif st.session_state["active_nav"] == "lgu":
     st.dataframe(df_lgu_summary, use_container_width=True, hide_index=True)
 
 # ---------------------------------------------------------
-# VIEW 4: PAMANA CDPD ANALYTICS (LINKED TO PAMANA CDPD PORTAL)
+# VIEW 4: PAMANA CDPD ANALYTICS (LIVE DB + PORTAL LINK)
 # ---------------------------------------------------------
 else:
     st.markdown('<div class="glow-header-title">🕊️ PAMANA CDPD Portal & Analytics</div>', unsafe_allow_html=True)
 
     c_top1, c_top2, c_top3 = st.columns([2.6, 1.2, 1.2])
     with c_top1:
-        if cdpd_online:
-            st.success(f"🟢 **PAMANA CDPD PORTAL CONNECTED:** `{PAMANA_CDPD_URL}` (Includes CEAC Barangay & Municipal data)")
+        if cdpd_db["connected"]:
+            st.success(f"🟢 **LIVE CDPD DATABASE CONNECTED:** Pulling CEAC Barangay, Municipal, Closeout & Disbursement data.")
+        elif cdpd_online:
+            st.info(f"🔗 **PAMANA CDPD PORTAL CONNECTED:** `{PAMANA_CDPD_URL}` • {cdpd_db['error']}")
         else:
-            st.info(f"🔗 **PAMANA CDPD PORTAL LINKED:** `{PAMANA_CDPD_URL}` (Status: `{cdpd_status_info}`)")
+            st.warning(f"⚠️ **CDPD PORTAL STATUS:** `{cdpd_status_info}` • {cdpd_db['error']}")
     with c_top2:
         st.link_button("🚀 Open PAMANA CDPD App", PAMANA_CDPD_URL, use_container_width=True)
     with c_top3:
-        show_embed = st.toggle("Embed Portal", value=True, key="toggle_cdpd_embed")
+        show_embed = st.toggle("Embed Portal", value=False, key="toggle_cdpd_embed")
+
+    cm1, cm2, cm3, cm4 = st.columns(4)
+    cm1.metric("CEAC BARANGAY LOGS", f"{cdpd_brgy_cnt:,}")
+    cm2.metric("CEAC MUNICIPAL LOGS", f"{cdpd_muni_cnt:,}")
+    cm3.metric("SUB-PROJECTS TRACKED", f"{cdpd_sp_cnt:,}")
+    cm4.metric("TOTAL DISBURSED", f"₱{cdpd_disb_tot:,.2f}")
 
     st.markdown("---")
+    if cdpd_db["connected"]:
+        c_ch1, c_ch2 = st.columns(2)
+        with c_ch1:
+            st.subheader("📍 CEAC Barangay Activities by Type")
+            if not df_cdpd_brgy_f.empty and "activity_name" in df_cdpd_brgy_f.columns:
+                b_cnt = df_cdpd_brgy_f["activity_name"].fillna("Unspecified").value_counts().reset_index()
+                b_cnt.columns = ["Activity", "Count"]
+                fig_cb = px.bar(b_cnt, x="Activity", y="Count", color="Activity", text_auto=True, template=plotly_template)
+                fig_cb.update_layout(showlegend=False, margin=dict(t=20, b=20, l=20, r=20))
+                st.plotly_chart(fig_cb, use_container_width=True)
+            else:
+                st.info("No CEAC Barangay records found for selected filter.")
+
+        with c_ch2:
+            st.subheader("🏢 CEAC Municipal Activities by Type")
+            if not df_cdpd_muni_f.empty and "activity_name" in df_cdpd_muni_f.columns:
+                m_cnt = df_cdpd_muni_f["activity_name"].fillna("Unspecified").value_counts().reset_index()
+                m_cnt.columns = ["Activity", "Count"]
+                fig_cm = px.bar(m_cnt, x="Activity", y="Count", color="Activity", text_auto=True, template=plotly_template)
+                fig_cm.update_layout(showlegend=False, margin=dict(t=20, b=20, l=20, r=20))
+                st.plotly_chart(fig_cm, use_container_width=True)
+            else:
+                st.info("No CEAC Municipal records found for selected filter.")
+
+        st.markdown("#### 📋 Live CDPD Summary Tables")
+        ct1, ct2, ct3 = st.tabs(["CEAC Barangay", "CEAC Municipal", "Sub-Projects & Disbursements"])
+        with ct1:
+            st.dataframe(df_cdpd_brgy_f, use_container_width=True, hide_index=True)
+        with ct2:
+            st.dataframe(df_cdpd_muni_f, use_container_width=True, hide_index=True)
+        with ct3:
+            st.markdown("**Sub-Project Closeout Tracker**")
+            st.dataframe(df_cdpd_sp_f, use_container_width=True, hide_index=True)
+            st.markdown("**Disbursements**")
+            st.dataframe(df_cdpd_disb_f, use_container_width=True, hide_index=True)
+
     if show_embed:
+        st.markdown("---")
         st.caption("Tip: Kung dili mo-load ang embedded window tungod sa browser/Streamlit frame headers, i-click ang **Open PAMANA CDPD App** sa ibabaw.")
         st.markdown(
             f"""
@@ -860,8 +1011,6 @@ else:
             """,
             unsafe_allow_html=True
         )
-    else:
-        st.info(f"Click **Open PAMANA CDPD App** above to open `{PAMANA_CDPD_URL}` in a full browser window.")
 
 # ---------------------------------------------------------
 # FOOTER & DATA PRIVACY COMPLIANCE NOTICE
