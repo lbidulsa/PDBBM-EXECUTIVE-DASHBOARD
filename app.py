@@ -324,23 +324,30 @@ def load_cdpd_live_data(db_url: str):
     try:
         eng = get_cdpd_engine(db_url)
 
-        def safe_read(sql_query):
+        def safe_read(preferred_query, fallback_table):
             try:
-                return pd.read_sql_query(text(sql_query), eng)
+                return pd.read_sql_query(text(preferred_query), eng)
             except Exception:
-                return pd.DataFrame()
+                try:
+                    return pd.read_sql_query(text(f"SELECT * FROM {fallback_table} LIMIT 500"), eng)
+                except Exception:
+                    return pd.DataFrame()
 
         result["ceac_barangay"] = safe_read(
-            "SELECT id, activity_name, region, province, municipality, barangay, cycle_batch, activity_date, mov_status, encoded_status FROM ceac_barangay ORDER BY id DESC"
+            "SELECT id, activity_name, region, province, municipality, barangay, cycle_batch, activity_date, mov_status, encoded_status FROM ceac_barangay ORDER BY id DESC",
+            "ceac_barangay"
         )
         result["ceac_municipal"] = safe_read(
-            "SELECT id, activity_name, region, province, municipality, cycle_batch, activity_date, mov_status, encoded_status FROM ceac_municipal ORDER BY id DESC"
+            "SELECT id, activity_name, region, province, municipality, cycle_batch, activity_date, mov_status, encoded_status FROM ceac_municipal ORDER BY id DESC",
+            "ceac_municipal"
         )
         result["closeout"] = safe_read(
-            "SELECT id, sp_id, sp_name, municipality, barangay, cycle_batch, overall_closeout_status, target_hhs, actual_hhs FROM sub_project_closeout_tracker ORDER BY id DESC"
+            "SELECT id, sp_id, sp_name, municipality, barangay, cycle_batch, overall_closeout_status, target_hhs, actual_hhs FROM sub_project_closeout_tracker ORDER BY id DESC",
+            "sub_project_closeout_tracker"
         )
         result["disbursement"] = safe_read(
-            "SELECT id, sp_id, municipality, dv_number, disbursement_date, amount, net_amount, status FROM disbursement ORDER BY id DESC"
+            "SELECT id, sp_id, municipality, dv_number, disbursement_date, amount, net_amount, status FROM disbursement ORDER BY id DESC",
+            "disbursement"
         )
         result["connected"] = True
     except Exception as ex:
@@ -1002,7 +1009,7 @@ else:
 
     if show_embed:
         st.markdown("---")
-        st.caption("Tip: Kung hindi mo-load ang embedded window tungod sa browser/Streamlit frame headers, i-click ang **Open PAMANA CDPD App** sa ibabaw.")
+        st.caption("Tip: Kung dili mo-load ang embedded window tungod sa browser/Streamlit frame headers, i-click ang **Open PAMANA CDPD App** sa ibabaw.")
         st.markdown(
             f"""
             <iframe src="{PAMANA_CDPD_URL}" width="100%" height="780"
