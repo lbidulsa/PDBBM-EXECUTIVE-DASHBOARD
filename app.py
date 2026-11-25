@@ -292,33 +292,19 @@ def get_cdpd_db_url():
 def get_cdpd_engine(db_url: str):
     if not db_url:
         return None
-    candidates = [db_url]
-    if "+psycopg2" in db_url:
-        candidates.append(db_url.replace("+psycopg2", "+psycopg"))
-        candidates.append(db_url.replace("+psycopg2", "+pg8000"))
-    elif db_url.startswith("postgresql://"):
-        candidates.append(db_url.replace("postgresql://", "postgresql+psycopg2://", 1))
-        candidates.append(db_url.replace("postgresql://", "postgresql+psycopg://", 1))
-        candidates.append(db_url.replace("postgresql://", "postgresql+pg8000://", 1))
-
-    last_err = None
-    for url_variant in candidates:
-        try:
-            eng = create_engine(
-                url_variant,
-                pool_pre_ping=True,
-                pool_size=5,
-                max_overflow=10,
-                pool_recycle=300
-            )
-            with eng.connect() as conn:
-                conn.execute(text("SELECT 1"))
-            return eng
-        except Exception as ex:
-            last_err = ex
-    if last_err:
-        raise last_err
-    return None
+    target_url = db_url
+    if target_url.startswith("postgresql://"):
+        target_url = target_url.replace("postgresql://", "postgresql+psycopg2://", 1)
+    eng = create_engine(
+        target_url,
+        pool_pre_ping=True,
+        pool_size=5,
+        max_overflow=10,
+        pool_recycle=300
+    )
+    with eng.connect() as conn:
+        conn.execute(text("SELECT 1"))
+    return eng
 
 @st.cache_data(ttl=60)
 def load_cdpd_live_data(db_url: str):
@@ -332,7 +318,7 @@ def load_cdpd_live_data(db_url: str):
         "disbursement": pd.DataFrame(),
     }
     if not db_url:
-        result["error"] = "SUPABASE_URL not configured in Streamlit Secrets."
+        result["error"] = "SUPABASE_URL or [postgres] url not configured in Streamlit Secrets."
         return result
 
     try:
@@ -709,7 +695,7 @@ all_provinces_list = sorted(list(set(base_provinces + [p for p in live_provinces
 
 f_col1, f_col2, f_col3, f_col4 = st.columns([2.7, 2.0, 1.3, 1.3])
 with f_col1:
-    db_badge = "🟢 CDPD DB Connected" if cdpd_db["connected"] else "🟡 CDPD DB Driver/Secrets Check"
+    db_badge = "🟢 CDPD DB Connected" if cdpd_db["connected"] else "🟡 CDPD DB Check"
     if sync_status != "offline":
         st.success(f"🟢 **LIVE SCMS (`{sync_status}`)** • {db_badge}")
     else:
@@ -813,7 +799,7 @@ def render_ceac_activities_block(key_prefix="ov"):
     if not cdpd_db["connected"]:
         st.warning(
             f"⚠️ **CDPD Database Sync Notice:** `{cdpd_db['error']}` — "
-            "Siguroha nga naa sa `requirements.txt` sa imong Dashboard repo ang `psycopg2-binary` ug `SQLAlchemy`, ug naka-set ang `SUPABASE_URL` sa Streamlit Secrets."
+            "I-check ang Streamlit Cloud Logs ug i-reboot ang Dashboard app human ma-save ang `requirements.txt` ug `[postgres]` Secrets."
         )
         return
 
