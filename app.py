@@ -292,13 +292,33 @@ def get_cdpd_db_url():
 def get_cdpd_engine(db_url: str):
     if not db_url:
         return None
-    return create_engine(
-        db_url,
-        pool_pre_ping=True,
-        pool_size=5,
-        max_overflow=10,
-        pool_recycle=300
-    )
+    candidates = [db_url]
+    if "+psycopg2" in db_url:
+        candidates.append(db_url.replace("+psycopg2", "+psycopg"))
+        candidates.append(db_url.replace("+psycopg2", "+pg8000"))
+    elif db_url.startswith("postgresql://"):
+        candidates.append(db_url.replace("postgresql://", "postgresql+psycopg2://", 1))
+        candidates.append(db_url.replace("postgresql://", "postgresql+psycopg://", 1))
+        candidates.append(db_url.replace("postgresql://", "postgresql+pg8000://", 1))
+
+    last_err = None
+    for url_variant in candidates:
+        try:
+            eng = create_engine(
+                url_variant,
+                pool_pre_ping=True,
+                pool_size=5,
+                max_overflow=10,
+                pool_recycle=300
+            )
+            with eng.connect() as conn:
+                conn.execute(text("SELECT 1"))
+            return eng
+        except Exception as ex:
+            last_err = ex
+    if last_err:
+        raise last_err
+    return None
 
 @st.cache_data(ttl=60)
 def load_cdpd_live_data(db_url: str):
@@ -317,8 +337,6 @@ def load_cdpd_live_data(db_url: str):
 
     try:
         eng = get_cdpd_engine(db_url)
-        with eng.connect() as conn:
-            conn.execute(text("SELECT 1"))
 
         def safe_read(sql_query):
             try:
@@ -691,7 +709,7 @@ all_provinces_list = sorted(list(set(base_provinces + [p for p in live_provinces
 
 f_col1, f_col2, f_col3, f_col4 = st.columns([2.7, 2.0, 1.3, 1.3])
 with f_col1:
-    db_badge = "🟢 CDPD DB Connected" if cdpd_db["connected"] else "🟡 CDPD DB Pending Secrets"
+    db_badge = "🟢 CDPD DB Connected" if cdpd_db["connected"] else "🟡 CDPD DB Driver/Secrets Check"
     if sync_status != "offline":
         st.success(f"🟢 **LIVE SCMS (`{sync_status}`)** • {db_badge}")
     else:
@@ -784,6 +802,67 @@ cdpd_muni_cnt = len(df_cdpd_muni_f)
 cdpd_sp_cnt = len(df_cdpd_sp_f)
 cdpd_disb_tot = float(pd.to_numeric(df_cdpd_disb_f["amount"], errors="coerce").fillna(0).sum()) if (not df_cdpd_disb_f.empty and "amount" in df_cdpd_disb_f.columns) else 0.0
 
+def render_ceac_activities_block(key_prefix="ov"):
+    """Renders CEAC Barangay & Municipal activities metrics, charts, and tables."""
+    cm1, cm2, cm3, cm4 = st.columns(4)
+    cm1.metric("CEAC BARANGAY LOGS", f"{cdpd_brgy_cnt:,}")
+    cm2.metric("CEAC MUNICIPAL LOGS", f"{cdpd_muni_cnt:,}")
+    cm3.metric("SUB-PROJECTS TRACKED", f"{cdpd_sp_cnt:,}")
+    cm4.metric("TOTAL DISBURSED", f"₱{cdpd_disb_tot:,.2f}")
+
+    if not cdpd_db["connected"]:
+        st.warning(
+            f"⚠️ **CDPD Database Sync Notice:** `{cdpd_db['error']}` — "
+            "Siguroha nga naa sa `requirements.txt` sa imong Dashboard repo ang `psycopg2-binary` ug `SQLAlchemy`, ug naka-set ang `SUPABASE_URL` sa Streamlit Secrets."
+        )
+        return
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    c_ch1, c_ch2 = st.columns(2)
+    with c_ch1:
+        st.subheader("📍 CEAC Barangay Activities")
+        if not df_cdpd_brgy_f.empty and "activity_name" in df_cdpd_brgy_f.columns:
+            b_cnt = df_cdpd_brgy_f["activity_name"].fillna("Unspecified").value_counts().reset_index()
+            b_cnt.columns = ["Activity", "Count"]
+            fig_cb = px.bar(b_cnt, x="Activity", y="Count", color="Activity", text_auto=True, template=plotly_template)
+            fig_cb.update_layout(showlegend=False, margin=dict(t=20, b=20, l=20, r=20))
+            st.plotly_chart(fig_cb, use_container_width=True, key=f"{key_prefix}_chart_brgy")
+        else:
+            st.info("No CEAC Barangay activity records found for selected filter.")
+
+    with c_ch2:
+        st.subheader("🏢 CEAC Municipal Activities")
+        if not df_cdpd_muni_f.empty and "activity_name" in df_cdpd_muni_f.columns:
+            m_cnt = df_cdpd_muni_f["activity_name"].fillna("Unspecified").value_counts().reset_index()
+            m_cnt.columns = ["Activity", "Count"]
+            fig_cm = px.bar(m_cnt, x="Activity", y="Count", color="Activity", text_auto=True, template=plotly_template)
+            fig_cm.update_layout(showlegend=False, margin=dict(t=20, b=20, l=20, r=20))
+            st.plotly_chart(fig_cm, use_container_width=True, key=f"{key_prefix}_chart_muni")
+        else:
+            st.info("No CEAC Municipal activity records found for selected filter.")
+
+    st.markdown("#### 📋 CEAC Activities & CDPD Records")
+    ct1, ct2, ct3 = st.tabs([
+        f"📍 CEAC Barangay ({cdpd_brgy_cnt})",
+        f"🏢 CEAC Municipal ({cdpd_muni_cnt})",
+        "🏗️ Sub-Projects & Disbursements"
+    ])
+    with ct1:
+        if not df_cdpd_brgy_f.empty:
+            st.dataframe(df_cdpd_brgy_f, use_container_width=True, hide_index=True)
+        else:
+            st.info("No CEAC Barangay records available.")
+    with ct2:
+        if not df_cdpd_muni_f.empty:
+            st.dataframe(df_cdpd_muni_f, use_container_width=True, hide_index=True)
+        else:
+            st.info("No CEAC Municipal records available.")
+    with ct3:
+        st.markdown("**Sub-Project Closeout Tracker**")
+        st.dataframe(df_cdpd_sp_f, use_container_width=True, hide_index=True)
+        st.markdown("**Disbursements**")
+        st.dataframe(df_cdpd_disb_f, use_container_width=True, hide_index=True)
+
 # ---------------------------------------------------------
 # VIEW 1: CONSOLIDATED EXECUTIVE OVERVIEW
 # ---------------------------------------------------------
@@ -865,26 +944,18 @@ if st.session_state["active_nav"] == "overview":
     l4.metric("PENDING FUND WITHDRAWAL", "₱600,000")
 
     st.markdown("---")
-    st.markdown('<div class="sec-card-cdpd"><span class="sec-title-cdpd">🕊️ 3. PAMANA CDPD</span></div>', unsafe_allow_html=True)
-    if cdpd_db["connected"]:
-        cm1, cm2, cm3, cm4 = st.columns(4)
-        cm1.metric("CEAC BARANGAY LOGS", f"{cdpd_brgy_cnt:,}")
-        cm2.metric("CEAC MUNICIPAL LOGS", f"{cdpd_muni_cnt:,}")
-        cm3.metric("SUB-PROJECTS TRACKED", f"{cdpd_sp_cnt:,}")
-        cm4.metric("TOTAL DISBURSED", f"₱{cdpd_disb_tot:,.2f}")
-
-    c_ov1, c_ov2 = st.columns([3, 1.2])
+    st.markdown('<div class="sec-card-cdpd"><span class="sec-title-cdpd">🕊️ 3. PAMANA CDPD & CEAC ACTIVITIES</span></div>', unsafe_allow_html=True)
+    c_ov1, c_ov2 = st.columns([3.2, 1.2])
     with c_ov1:
         status_badge = "🟢 Online" if cdpd_online else f"🟡 Check Link ({cdpd_status_info})"
-        db_note = "Live Supabase sync active." if cdpd_db["connected"] else f"Add `SUPABASE_URL` to Streamlit Secrets to pull live CDPD counts ({cdpd_db['error']})."
-        st.info(
-            f"**PAMANA CDPD Portal (`{PAMANA_CDPD_URL}`):** Status: **{status_badge}** — {db_note}"
-        )
+        st.caption(f"PAMANA CDPD Portal (`{PAMANA_CDPD_URL}`) • Status: {status_badge}")
     with c_ov2:
         st.link_button("🚀 Launch PAMANA CDPD Portal", PAMANA_CDPD_URL, use_container_width=True)
         if st.button("🧭 Go to CDPD View", key="btn_ov_to_cdpd", use_container_width=True):
             st.session_state["active_nav"] = "cdpd"
             st.rerun()
+
+    render_ceac_activities_block(key_prefix="ov")
 
 # ---------------------------------------------------------
 # VIEW 2: SCMS ANALYTICS DEDICATED VIEW
@@ -947,7 +1018,7 @@ else:
     c_top1, c_top2, c_top3 = st.columns([2.6, 1.2, 1.2])
     with c_top1:
         if cdpd_db["connected"]:
-            st.success(f"🟢 **LIVE CDPD DATABASE CONNECTED:** Pulling CEAC Barangay, Municipal, Closeout & Disbursement data.")
+            st.success("🟢 **LIVE CDPD DATABASE CONNECTED:** Pulling CEAC Barangay, Municipal, Closeout & Disbursement data.")
         elif cdpd_online:
             st.info(f"🔗 **PAMANA CDPD PORTAL CONNECTED:** `{PAMANA_CDPD_URL}` • {cdpd_db['error']}")
         else:
@@ -957,48 +1028,7 @@ else:
     with c_top3:
         show_embed = st.toggle("Embed Portal", value=False, key="toggle_cdpd_embed")
 
-    cm1, cm2, cm3, cm4 = st.columns(4)
-    cm1.metric("CEAC BARANGAY LOGS", f"{cdpd_brgy_cnt:,}")
-    cm2.metric("CEAC MUNICIPAL LOGS", f"{cdpd_muni_cnt:,}")
-    cm3.metric("SUB-PROJECTS TRACKED", f"{cdpd_sp_cnt:,}")
-    cm4.metric("TOTAL DISBURSED", f"₱{cdpd_disb_tot:,.2f}")
-
-    st.markdown("---")
-    if cdpd_db["connected"]:
-        c_ch1, c_ch2 = st.columns(2)
-        with c_ch1:
-            st.subheader("📍 CEAC Barangay Activities by Type")
-            if not df_cdpd_brgy_f.empty and "activity_name" in df_cdpd_brgy_f.columns:
-                b_cnt = df_cdpd_brgy_f["activity_name"].fillna("Unspecified").value_counts().reset_index()
-                b_cnt.columns = ["Activity", "Count"]
-                fig_cb = px.bar(b_cnt, x="Activity", y="Count", color="Activity", text_auto=True, template=plotly_template)
-                fig_cb.update_layout(showlegend=False, margin=dict(t=20, b=20, l=20, r=20))
-                st.plotly_chart(fig_cb, use_container_width=True)
-            else:
-                st.info("No CEAC Barangay records found for selected filter.")
-
-        with c_ch2:
-            st.subheader("🏢 CEAC Municipal Activities by Type")
-            if not df_cdpd_muni_f.empty and "activity_name" in df_cdpd_muni_f.columns:
-                m_cnt = df_cdpd_muni_f["activity_name"].fillna("Unspecified").value_counts().reset_index()
-                m_cnt.columns = ["Activity", "Count"]
-                fig_cm = px.bar(m_cnt, x="Activity", y="Count", color="Activity", text_auto=True, template=plotly_template)
-                fig_cm.update_layout(showlegend=False, margin=dict(t=20, b=20, l=20, r=20))
-                st.plotly_chart(fig_cm, use_container_width=True)
-            else:
-                st.info("No CEAC Municipal records found for selected filter.")
-
-        st.markdown("#### 📋 Live CDPD Summary Tables")
-        ct1, ct2, ct3 = st.tabs(["CEAC Barangay", "CEAC Municipal", "Sub-Projects & Disbursements"])
-        with ct1:
-            st.dataframe(df_cdpd_brgy_f, use_container_width=True, hide_index=True)
-        with ct2:
-            st.dataframe(df_cdpd_muni_f, use_container_width=True, hide_index=True)
-        with ct3:
-            st.markdown("**Sub-Project Closeout Tracker**")
-            st.dataframe(df_cdpd_sp_f, use_container_width=True, hide_index=True)
-            st.markdown("**Disbursements**")
-            st.dataframe(df_cdpd_disb_f, use_container_width=True, hide_index=True)
+    render_ceac_activities_block(key_prefix="cdpd_tab")
 
     if show_embed:
         st.markdown("---")
