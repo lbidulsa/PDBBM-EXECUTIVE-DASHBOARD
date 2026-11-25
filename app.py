@@ -797,10 +797,6 @@ def render_ceac_activities_block(key_prefix="ov"):
     cm4.metric("TOTAL DISBURSED", f"₱{cdpd_disb_tot:,.2f}")
 
     if not cdpd_db["connected"]:
-        st.warning(
-            f"⚠️ **CDPD Database Sync Notice:** `{cdpd_db['error']}` — "
-            "I-check ang Streamlit Cloud Logs ug i-reboot ang Dashboard app human ma-save ang `requirements.txt` ug `[postgres]` Secrets."
-        )
         return
 
     st.markdown("<br>", unsafe_allow_html=True)
@@ -931,15 +927,6 @@ if st.session_state["active_nav"] == "overview":
 
     st.markdown("---")
     st.markdown('<div class="sec-card-cdpd"><span class="sec-title-cdpd">🕊️ 3. PAMANA CDPD & CEAC ACTIVITIES</span></div>', unsafe_allow_html=True)
-    c_ov1, c_ov2 = st.columns([3.2, 1.2])
-    with c_ov1:
-        status_badge = "🟢 Online" if cdpd_online else f"🟡 Check Link ({cdpd_status_info})"
-        st.caption(f"PAMANA CDPD Portal (`{PAMANA_CDPD_URL}`) • Status: {status_badge}")
-    with c_ov2:
-        st.link_button("🚀 Launch PAMANA CDPD Portal", PAMANA_CDPD_URL, use_container_width=True)
-        if st.button("🧭 Go to CDPD View", key="btn_ov_to_cdpd", use_container_width=True):
-            st.session_state["active_nav"] = "cdpd"
-            st.rerun()
 
     render_ceac_activities_block(key_prefix="ov")
 
