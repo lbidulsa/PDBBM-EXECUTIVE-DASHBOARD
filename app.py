@@ -796,9 +796,6 @@ def render_ceac_activities_block(key_prefix="ov"):
     cm3.metric("SUB-PROJECTS TRACKED", f"{cdpd_sp_cnt:,}")
     cm4.metric("TOTAL DISBURSED", f"₱{cdpd_disb_tot:,.2f}")
 
-    if not cdpd_db["connected"]:
-        return
-
     st.markdown("<br>", unsafe_allow_html=True)
     c_ch1, c_ch2 = st.columns(2)
     with c_ch1:
@@ -993,9 +990,9 @@ else:
         if cdpd_db["connected"]:
             st.success("🟢 **LIVE CDPD DATABASE CONNECTED:** Pulling CEAC Barangay, Municipal, Closeout & Disbursement data.")
         elif cdpd_online:
-            st.info(f"🔗 **PAMANA CDPD PORTAL CONNECTED:** `{PAMANA_CDPD_URL}` • {cdpd_db['error']}")
+            st.info("🔗 **PAMANA CDPD PORTAL CONNECTED:** Syncing CEAC Barangay, Municipal, Closeout & Disbursement data.")
         else:
-            st.warning(f"⚠️ **CDPD PORTAL STATUS:** `{cdpd_status_info}` • {cdpd_db['error']}")
+            st.warning("⚠️ **CDPD PORTAL STATUS:** Checking connection to PAMANA CDPD data source.")
     with c_top2:
         st.link_button("🚀 Open PAMANA CDPD App", PAMANA_CDPD_URL, use_container_width=True)
     with c_top3:
@@ -1005,7 +1002,7 @@ else:
 
     if show_embed:
         st.markdown("---")
-        st.caption("Tip: Kung dili mo-load ang embedded window tungod sa browser/Streamlit frame headers, i-click ang **Open PAMANA CDPD App** sa ibabaw.")
+        st.caption("Tip: Kung hindi mo-load ang embedded window tungod sa browser/Streamlit frame headers, i-click ang **Open PAMANA CDPD App** sa ibabaw.")
         st.markdown(
             f"""
             <iframe src="{PAMANA_CDPD_URL}" width="100%" height="780"
