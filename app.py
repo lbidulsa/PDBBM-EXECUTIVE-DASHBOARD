@@ -25,6 +25,15 @@ st.set_page_config(
 # ---------------------------------------------------------
 st.markdown("""
     <style>
+    /* Force Light Executive Canvas even when #MainMenu is hidden */
+    .stApp,
+    [data-testid="stAppViewContainer"],
+    .main,
+    section.main {
+        background-color: #FFFFFF !important;
+        color: #0F172A !important;
+    }
+
     header[data-testid="stHeader"],
     [data-testid="stHeader"] {
         background: transparent !important;
@@ -45,8 +54,10 @@ st.markdown("""
         visibility: hidden !important;
     }
 
-    /* Hide Deploy Button, Toolbar Actions, Fork, Footer & Cloud Viewer Badge */
+    /* Hide Deploy Button, Manage App Button, Toolbar Actions, Fork, Footer & Cloud Badge */
     .stAppDeployButton,
+    button[data-testid="manage-app-button"],
+    [data-testid="manage-app-button"],
     [data-testid="stToolbar"],
     [data-testid="stToolbarActions"],
     [data-testid="stActionButtonIcon"],
@@ -59,6 +70,9 @@ st.markdown("""
     div[class^="viewerBadge_"],
     div[class^="_profileContainer_"],
     div[class^="_terminalButton_"],
+    div[class*="_terminalButton_"],
+    iframe[title="Streamlit Cloud Status"],
+    script[src*="streamlitstatus.com"],
     a[href*="streamlit.io/cloud"],
     a[href*="github.com"] {
         visibility: hidden !important;
@@ -111,7 +125,7 @@ st.markdown("""
         font-weight: 700 !important;
         padding: 9px 14px !important;
         box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04) !important;
-        transition: all 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+        transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
     }
 
     div[data-testid="stHorizontalBlock"] div.stButton > button:hover {
@@ -147,7 +161,7 @@ st.markdown("""
         border-radius: 10px !important;
         border: 1px solid #CBD5E1 !important;
         padding: 10px 20px !important;
-        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+        transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
     }
     div.stDownloadButton > button:hover {
         background-color: #FFFFFF !important;
@@ -175,7 +189,7 @@ st.markdown("""
         border-radius: 14px !important;
         padding: 16px !important;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03) !important;
-        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+        transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
     }
     div[data-testid="stMetric"]:hover {
         transform: translateY(-4px) scale(1.02) !important;
@@ -201,7 +215,7 @@ st.markdown("""
         border-radius: 12px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
         margin-bottom: 16px;
-        transition: all 0.3s ease;
+        transition: all 0.2s ease;
     }
     .sec-card-scms { border-left: 6px solid #E11D48; }
     .sec-card-lgu { border-left: 6px solid #16A34A; }
@@ -223,7 +237,10 @@ st.markdown("""
 if "privacy_accepted" not in st.session_state:
     st.session_state["privacy_accepted"] = False
 
-if hasattr(st, "dialog"):
+def accept_privacy():
+    st.session_state["privacy_accepted"] = True
+
+if hasattr(st, "dialog") and not st.session_state["privacy_accepted"]:
     @st.dialog("🔒 DATA PRIVACY ACT COMPLIANCE REMINDER (RA 10173)")
     def privacy_modal():
         st.markdown("""
@@ -236,12 +253,13 @@ if hasattr(st, "dialog"):
         3. **Security Standards:** All system interactions and access sessions are logged for audit compliance.
         """)
         st.divider()
-        if st.button("✅ I Agree & Proceed to Executive Portal", use_container_width=True):
-            st.session_state["privacy_accepted"] = True
-            st.rerun()
+        st.button(
+            "✅ I Agree & Proceed to Executive Portal",
+            use_container_width=True,
+            on_click=accept_privacy
+        )
 
-    if not st.session_state["privacy_accepted"]:
-        privacy_modal()
+    privacy_modal()
 
 # ---------------------------------------------------------
 # LOGO LOADERS & HELPERS
@@ -319,7 +337,7 @@ def get_cdpd_engine(db_url: str):
         conn.execute(text("SELECT 1"))
     return eng
 
-@st.cache_data(ttl=60)
+@st.cache_data(ttl=120)
 def load_cdpd_live_data(db_url: str):
     """Loads aggregate/summary tables from the PAMANA CDPD Supabase database."""
     result = {
@@ -435,7 +453,7 @@ def finalize_dataframe(raw_rows):
     df.dropna(how="all", inplace=True)
     return df
 
-@st.cache_data(ttl=60)
+@st.cache_data(ttl=120)
 def fetch_all_scms_tabs():
     """Fetches SCMS published/live tabs via Published CSV/HTML, API v4, or GVIZ fallback."""
     df_actual = pd.DataFrame()
@@ -444,7 +462,7 @@ def fetch_all_scms_tabs():
 
     # TIER 0: Published SCMS Sheet CSV/HTML
     try:
-        pub_res = requests.get(SCMS_PUB_CSV_URL, timeout=10)
+        pub_res = requests.get(SCMS_PUB_CSV_URL, timeout=6)
         if pub_res.status_code == 200 and "<!DOCTYPE html>" not in pub_res.text[:200] and "<html" not in pub_res.text[:200].lower():
             pub_df = pd.read_csv(StringIO(pub_res.text))
             pub_df.dropna(how="all", inplace=True)
@@ -456,7 +474,7 @@ def fetch_all_scms_tabs():
 
     if df_actual.empty:
         try:
-            html_res = requests.get(SCMS_PUB_HTML_URL, timeout=10)
+            html_res = requests.get(SCMS_PUB_HTML_URL, timeout=6)
             if html_res.status_code == 200:
                 tables = pd.read_html(StringIO(html_res.text))
                 for tbl in tables:
@@ -472,7 +490,7 @@ def fetch_all_scms_tabs():
     if GOOGLE_API_KEY:
         meta_url = f"https://sheets.googleapis.com/v4/spreadsheets/{SCMS_SHEET_ID}?fields=sheets.properties&key={GOOGLE_API_KEY}"
         try:
-            meta_res = requests.get(meta_url, timeout=10)
+            meta_res = requests.get(meta_url, timeout=6)
             if meta_res.status_code == 200:
                 sheets_meta = meta_res.json().get("sheets", [])
                 for s in sheets_meta:
@@ -483,7 +501,7 @@ def fetch_all_scms_tabs():
                     if "ACTUAL" in norm_title or "SCMS TARGET" in norm_title:
                         encoded_exact = requests.utils.quote(exact_title)
                         val_url = f"https://sheets.googleapis.com/v4/spreadsheets/{SCMS_SHEET_ID}/values/{encoded_exact}?key={GOOGLE_API_KEY}"
-                        val_res = requests.get(val_url, timeout=10)
+                        val_res = requests.get(val_url, timeout=6)
                         if val_res.status_code == 200:
                             values = val_res.json().get("values", [])
                             parsed_df = finalize_dataframe(values)
@@ -508,7 +526,7 @@ def fetch_all_scms_tabs():
             enc = requests.utils.quote(t_name)
             csv_url = f"https://docs.google.com/spreadsheets/d/{SCMS_SHEET_ID}/gviz/tq?tqx=out:csv&sheet={enc}"
             try:
-                r = requests.get(csv_url, timeout=10)
+                r = requests.get(csv_url, timeout=6)
                 if r.status_code == 200 and "<!DOCTYPE html>" not in r.text[:200]:
                     temp_df = pd.read_csv(StringIO(r.text))
                     temp_df.dropna(how="all", inplace=True)
@@ -525,7 +543,7 @@ def fetch_all_scms_tabs():
 
     return df_actual, df_target, sync_status
 
-@st.cache_data(ttl=60)
+@st.cache_data(ttl=120)
 def load_scms_live_data():
     df_actual_raw, df_target_raw, sync_status = fetch_all_scms_tabs()
 
@@ -613,16 +631,7 @@ def load_scms_live_data():
 
     return df_actual_raw, df_target_raw, df_actual_clean, df_target_clean, sync_status
 
-@st.cache_data(ttl=120)
-def check_cdpd_portal_status(url):
-    try:
-        r = requests.get(url, timeout=8)
-        return r.status_code == 200, r.status_code
-    except Exception as ex:
-        return False, str(ex)
-
 df_actual_raw, df_target_raw, df_actual_clean, df_target_clean, sync_status = load_scms_live_data()
-cdpd_online, cdpd_status_info = check_cdpd_portal_status(PAMANA_CDPD_URL)
 cdpd_db = load_cdpd_live_data(get_cdpd_db_url())
 
 # Fallback static datasets
@@ -655,6 +664,9 @@ df_lgu_summary = pd.DataFrame({
 if "active_nav" not in st.session_state:
     st.session_state["active_nav"] = "overview"
 
+def set_nav(nav_key):
+    st.session_state["active_nav"] = nav_key
+
 nav_brand, nav_m1, nav_m2, nav_m3, nav_m4 = st.columns([3.2, 1.8, 1.7, 1.8, 1.5])
 
 with nav_brand:
@@ -667,40 +679,40 @@ with nav_brand:
         st.markdown('<div class="exec-brand-sub">DSWD FO X • Executive Decision Portal</div>', unsafe_allow_html=True)
 
 with nav_m1:
-    if st.button(
+    st.button(
         "🌐 Executive Overview",
         type="primary" if st.session_state["active_nav"] == "overview" else "secondary",
-        use_container_width=True
-    ):
-        st.session_state["active_nav"] = "overview"
-        st.rerun()
+        use_container_width=True,
+        on_click=set_nav,
+        args=("overview",)
+    )
 
 with nav_m2:
-    if st.button(
+    st.button(
         "📦 SCMS Analytics",
         type="primary" if st.session_state["active_nav"] == "scms" else "secondary",
-        use_container_width=True
-    ):
-        st.session_state["active_nav"] = "scms"
-        st.rerun()
+        use_container_width=True,
+        on_click=set_nav,
+        args=("scms",)
+    )
 
 with nav_m3:
-    if st.button(
+    st.button(
         "🏛️ PAMANA LGU-Led",
         type="primary" if st.session_state["active_nav"] == "lgu" else "secondary",
-        use_container_width=True
-    ):
-        st.session_state["active_nav"] = "lgu"
-        st.rerun()
+        use_container_width=True,
+        on_click=set_nav,
+        args=("lgu",)
+    )
 
 with nav_m4:
-    if st.button(
+    st.button(
         "🕊️ PAMANA CDPD",
         type="primary" if st.session_state["active_nav"] == "cdpd" else "secondary",
-        use_container_width=True
-    ):
-        st.session_state["active_nav"] = "cdpd"
-        st.rerun()
+        use_container_width=True,
+        on_click=set_nav,
+        args=("cdpd",)
+    )
 
 st.markdown("<hr style='margin: 6px 0 14px 0; border-color: #CBD5E1;'>", unsafe_allow_html=True)
 
@@ -1017,10 +1029,8 @@ else:
     with c_top1:
         if cdpd_db["connected"]:
             st.success("🟢 **LIVE CDPD DATABASE CONNECTED:** Pulling CEAC Barangay, Municipal, Closeout & Disbursement data.")
-        elif cdpd_online:
-            st.info("🔗 **PAMANA CDPD PORTAL CONNECTED:** Syncing CEAC Barangay, Municipal, Closeout & Disbursement data.")
         else:
-            st.warning("⚠️ **CDPD PORTAL STATUS:** Checking connection to PAMANA CDPD data source.")
+            st.info("🔗 **PAMANA CDPD PORTAL:** Syncing CEAC Barangay, Municipal, Closeout & Disbursement data.")
     with c_top2:
         show_embed = st.toggle("Embed Portal", value=False, key="toggle_cdpd_embed")
 
