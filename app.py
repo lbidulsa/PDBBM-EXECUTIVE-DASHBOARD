@@ -294,6 +294,13 @@ def get_cdpd_db_url():
         pass
     return DEFAULT_CDPD_DB_URL
 
+def sanitize_db_error(raw_err: str) -> str:
+    if not raw_err:
+        return ""
+    cleaned = re.sub(r"://[^@\s]+@", "://***@", str(raw_err))
+    first_line = cleaned.splitlines()[0].strip()
+    return first_line[:220]
+
 @st.cache_resource
 def get_cdpd_engine(db_url: str):
     if not db_url:
@@ -340,24 +347,31 @@ def load_cdpd_live_data(db_url: str):
                     return pd.DataFrame()
 
         result["ceac_barangay"] = safe_read(
-            "SELECT id, activity_name, region, province, municipality, barangay, cycle_batch, activity_date, mov_status, encoded_status FROM ceac_barangay ORDER BY id DESC",
+            """
+            SELECT id, activity_name, region, province, municipality, barangay,
+                   cycle_batch, activity_date, date_encoded, encoded_by,
+                   mov_status, encoded_status, mov_attendance, mov_brgy_minutes,
+                   mov_lgu_minutes, mov_cv_files, remarks
+            FROM ceac_barangay
+            ORDER BY id DESC NULLS LAST
+            """,
             "ceac_barangay"
         )
         result["ceac_municipal"] = safe_read(
-            "SELECT id, activity_name, region, province, municipality, cycle_batch, activity_date, mov_status, encoded_status FROM ceac_municipal ORDER BY id DESC",
+            "SELECT id, activity_name, region, province, municipality, cycle_batch, activity_date, mov_status, encoded_status FROM ceac_municipal ORDER BY id DESC NULLS LAST",
             "ceac_municipal"
         )
         result["closeout"] = safe_read(
-            "SELECT id, sp_id, sp_name, municipality, barangay, cycle_batch, overall_closeout_status, target_hhs, actual_hhs FROM sub_project_closeout_tracker ORDER BY id DESC",
+            "SELECT id, sp_id, sp_name, municipality, barangay, cycle_batch, overall_closeout_status, target_hhs, actual_hhs FROM sub_project_closeout_tracker ORDER BY id DESC NULLS LAST",
             "sub_project_closeout_tracker"
         )
         result["disbursement"] = safe_read(
-            "SELECT id, sp_id, municipality, dv_number, disbursement_date, amount, net_amount, status FROM disbursement ORDER BY id DESC",
+            "SELECT id, sp_id, municipality, dv_number, disbursement_date, amount, net_amount, status FROM disbursement ORDER BY id DESC NULLS LAST",
             "disbursement"
         )
         result["connected"] = True
     except Exception as ex:
-        result["error"] = str(ex)
+        result["error"] = sanitize_db_error(str(ex))
 
     return result
 
@@ -725,6 +739,7 @@ with f_col2:
 with f_col3:
     if st.button("🔄 Sync Live Data", use_container_width=True):
         st.cache_data.clear()
+        st.cache_resource.clear()
         st.toast("🔄 Refreshed Live SCMS & CDPD Data!", icon="✨")
         st.rerun()
 
@@ -800,6 +815,9 @@ cdpd_disb_tot = float(pd.to_numeric(df_cdpd_disb_f["amount"], errors="coerce").f
 
 def render_ceac_activities_block(key_prefix="ov"):
     """Renders CEAC Barangay & Municipal activities metrics, charts, and tables."""
+    if not cdpd_db["connected"] and cdpd_db.get("error"):
+        st.caption(f"DB status note: {cdpd_db['error']}")
+
     cm1, cm2, cm3, cm4 = st.columns(4)
     cm1.metric("CEAC BARANGAY LOGS", f"{cdpd_brgy_cnt:,}")
     cm2.metric("CEAC MUNICIPAL LOGS", f"{cdpd_muni_cnt:,}")
