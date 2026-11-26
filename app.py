@@ -25,8 +25,16 @@ st.set_page_config(
 # ---------------------------------------------------------
 st.markdown("""
     <style>
-    header[data-testid="stHeader"] {
+    header[data-testid="stHeader"],
+    [data-testid="stHeader"] {
         background: transparent !important;
+        height: 0px !important;
+        min-height: 0px !important;
+    }
+
+    [data-testid="stDecoration"] {
+        display: none !important;
+        visibility: hidden !important;
     }
 
     /* Hide Sidebar completely */
@@ -37,32 +45,30 @@ st.markdown("""
         visibility: hidden !important;
     }
 
-    /* Hide Deploy Button, Toolbar Actions, Footer & Cloud Viewer Badge */
+    /* Hide Deploy Button, Toolbar Actions, Fork, Footer & Cloud Viewer Badge */
     .stAppDeployButton,
+    [data-testid="stToolbar"],
     [data-testid="stToolbarActions"],
     [data-testid="stActionButtonIcon"],
-    footer,
     [data-testid="stStatusWidget"],
+    #MainMenu,
+    footer,
     .viewerBadge_container__1QSob,
     .viewerBadge_link__1S137,
     .viewerBadge_text__1JaDK,
     div[class^="viewerBadge_"],
     div[class^="_profileContainer_"],
     div[class^="_terminalButton_"],
-    a[href*="streamlit.io/cloud"] {
+    a[href*="streamlit.io/cloud"],
+    a[href*="github.com"] {
         visibility: hidden !important;
         display: none !important;
         opacity: 0 !important;
         pointer-events: none !important;
     }
 
-    #MainMenu {
-        visibility: visible !important;
-        display: flex !important;
-    }
-
     .block-container {
-        padding-top: 1.5rem !important;
+        padding-top: 1.2rem !important;
         max-width: 96% !important;
     }
 
@@ -700,7 +706,7 @@ for tbl_key in ["ceac_barangay", "ceac_municipal", "closeout", "disbursement"]:
 base_provinces = ['Bukidnon', 'Lanao del Norte', 'Lanao del Sur', 'Misamis Occidental', 'Misamis Oriental', 'Zamboanga del Sur', 'Zamboanga del Norte']
 all_provinces_list = sorted(list(set(base_provinces + [p for p in live_provinces if p])))
 
-f_col1, f_col2, f_col3, f_col4 = st.columns([2.7, 2.0, 1.3, 1.3])
+f_col1, f_col2, f_col3 = st.columns([4.0, 2.0, 1.3])
 with f_col1:
     db_badge = "🟢 CDPD DB Connected" if cdpd_db["connected"] else "🟡 CDPD DB Check"
     if sync_status != "offline":
@@ -717,9 +723,6 @@ with f_col2:
     selected_provinces = all_provinces_list if selected_province_opt == "All Provinces (Region X)" else [selected_province_opt]
 
 with f_col3:
-    st.link_button("🕊️ Open CDPD", PAMANA_CDPD_URL, use_container_width=True)
-
-with f_col4:
     if st.button("🔄 Sync Live Data", use_container_width=True):
         st.cache_data.clear()
         st.toast("🔄 Refreshed Live SCMS & CDPD Data!", icon="✨")
@@ -987,12 +990,12 @@ elif st.session_state["active_nav"] == "lgu":
     st.dataframe(df_lgu_summary, use_container_width=True, hide_index=True)
 
 # ---------------------------------------------------------
-# VIEW 4: PAMANA CDPD ANALYTICS (LIVE DB + PORTAL LINK)
+# VIEW 4: PAMANA CDPD ANALYTICS (LIVE DB + PORTAL EMBED)
 # ---------------------------------------------------------
 else:
     st.markdown('<div class="glow-header-title">🕊️ PAMANA CDPD Portal & Analytics</div>', unsafe_allow_html=True)
 
-    c_top1, c_top2, c_top3 = st.columns([2.6, 1.2, 1.2])
+    c_top1, c_top2 = st.columns([3.8, 1.2])
     with c_top1:
         if cdpd_db["connected"]:
             st.success("🟢 **LIVE CDPD DATABASE CONNECTED:** Pulling CEAC Barangay, Municipal, Closeout & Disbursement data.")
@@ -1001,15 +1004,12 @@ else:
         else:
             st.warning("⚠️ **CDPD PORTAL STATUS:** Checking connection to PAMANA CDPD data source.")
     with c_top2:
-        st.link_button("🚀 Open PAMANA CDPD App", PAMANA_CDPD_URL, use_container_width=True)
-    with c_top3:
         show_embed = st.toggle("Embed Portal", value=False, key="toggle_cdpd_embed")
 
     render_ceac_activities_block(key_prefix="cdpd_tab")
 
     if show_embed:
         st.markdown("---")
-        st.caption("Tip: Kung dili mo-load ang embedded window tungod sa browser/Streamlit frame headers, i-click ang **Open PAMANA CDPD App** sa ibabaw.")
         st.markdown(
             f"""
             <iframe src="{PAMANA_CDPD_URL}" width="100%" height="780"
